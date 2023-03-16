@@ -2,26 +2,27 @@
 
 import gi
 
-from source.wireframe import Object
+from sgi.object import Object
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
-class DisplayFileHandler():
+class DisplayFile():
     objects: list[Object]
     _display_file_list: Gtk.ListStore
 
-    def __init__(self, display_file_list: Gtk.ListStore) -> None:
+    def __init__(self, display_file_list: Gtk.ListStore):
         self.objects = []
         self._display_file_list = display_file_list
 
-    def add_object(self, obj: Object) -> None:
+    def clear_all(self):
+        self.objects.clear()
+        self._display_file_list.clear()
+
+    def add(self, obj: Object):
         self.objects.append(obj)
         self._display_file_list.append([obj.name, str(obj.position)])
 
-    def update_object_info(self, index: int) -> None:
+    def update(self, index: int):
         self._display_file_list[index][1] = str(self.objects[index].position)
 
-    def clear_all(self) -> None:
-        self.objects.clear()
-        self._display_file_list.clear()

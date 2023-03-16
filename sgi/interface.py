@@ -2,9 +2,9 @@
 
 import os
 import gi
-from source.displayfile import DisplayFileHandler
-from source.editor import EditorHandler
-from source.viewport import ViewportHandler
+from sgi.displayfile import DisplayFile
+from sgi.editor import Editor
+from sgi.viewport import Viewport
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -14,11 +14,11 @@ from gi.repository import Gtk
 class MainWindow(Gtk.Window):
     __gtype_name__ = "MainWindow"  # Nome da janela principal
 
-    viewport_handler: ViewportHandler
-    display_file_handler: DisplayFileHandler
-    editor_handler: EditorHandler
+    viewport: Viewport
+    display_file: DisplayFile
+    editor: Editor
 
-    viewport_drawing_area: Gtk.DrawingArea = Gtk.Template.Child()
+    drawing_area: Gtk.DrawingArea = Gtk.Template.Child()
     point_button: Gtk.ToggleButton = Gtk.Template.Child()
     line_button: Gtk.ToggleButton = Gtk.Template.Child()
     polygon_button: Gtk.ToggleButton = Gtk.Template.Child()
@@ -35,10 +35,10 @@ class MainWindow(Gtk.Window):
     rotation_y_button: Gtk.SpinButton = Gtk.Template.Child()
     rotation_z_button: Gtk.SpinButton = Gtk.Template.Child()
 
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
-        self.display_file_handler = DisplayFileHandler(self.display_file_list)
-        self.editor_handler = EditorHandler(self,
+        self.display_file = DisplayFile(self.display_file_list)
+        self.editor = Editor(self,
                                             self.point_button,
                                             self.line_button,
                                             self.polygon_button,
@@ -53,6 +53,6 @@ class MainWindow(Gtk.Window):
                                             self.rotation_x_button,
                                             self.rotation_y_button,
                                             self.rotation_z_button)
-        self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area)
+        self.viewport = Viewport(self, self.drawing_area)
 
         self.connect("destroy", Gtk.main_quit)

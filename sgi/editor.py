@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import gi
-from source.transform import Vector
-from source.wireframe import ObjectType, Object, Point, Line, Wireframe
+from sgi.transform import Vector
+from sgi.object import ObjectType, Object, Point, Line, Wireframe
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
-class EditorHandler():
-
+class Editor():
     # Botões de edição.
     _main_window: None
     _focus_object: Object
@@ -50,7 +49,7 @@ class EditorHandler():
                  scale_z_button: Gtk.SpinButton,
                  rotation_x_button: Gtk.SpinButton,
                  rotation_y_button: Gtk.SpinButton,
-                 rotation_z_button: Gtk.SpinButton) -> None:
+                 rotation_z_button: Gtk.SpinButton):
 
         self._main_window = main_window
         self._focus_object = None
@@ -97,7 +96,19 @@ class EditorHandler():
 
         self._user_call_lock = True
 
-    def update_spin_buttons(self) -> None:
+    def update_toggle_buttons(self, mode: ObjectType):
+        # Atualiza marcação
+        self._user_call_lock = False
+        match mode:
+            case ObjectType.POINT:
+                self._point_button.set_active(False)
+            case ObjectType.LINE:
+                self._line_button.set_active(False)
+            case ObjectType.POLYGON:
+                self._polygon_button.set_active(False)
+        self._user_call_lock = True
+
+    def update_spin_buttons(self):
         # Atualiza input numéricos.
         self._user_call_lock = False
         self._position_x_button.set_value(self._focus_object.position.x)
@@ -111,43 +122,30 @@ class EditorHandler():
         self._rotation_z_button.set_value(self._focus_object.rotation.z)
         self._user_call_lock = True
 
-    def update_toggle_buttons(self, mode: ObjectType) -> None:
-        # Atualiza marcação
-        self._user_call_lock = False
-        match mode:
-            case ObjectType.POINT:
-                self._point_button.set_active(False)
-            case ObjectType.LINE:
-                self._line_button.set_active(False)
-            case ObjectType.POLYGON:
-                self._polygon_button.set_active(False)
-        self._user_call_lock = True
-
-    def click(self, position: Vector) -> None:
+    def click(self, position: Vector):
         # Processa input de clique no viewport.
-
         if self._mode != ObjectType.NULL:
             self._temp_coords.append(position)
             completed = False
             if self._mode == ObjectType.POINT and len(self._temp_coords) >= 1:
-                self._main_window.display_file_handler.add_object(Point(self._temp_coords[0], "Point", self._color))
+                self._main_window.display_file.add(Point(self._temp_coords[0], "Point", self._color))
                 completed = True
             elif self._mode == ObjectType.LINE and len(self._temp_coords) >= 2:
-                self._main_window.display_file_handler.add_object(
+                self._main_window.display_file.add(
                     Line(self._temp_coords[0], self._temp_coords[1], "Line", self._color, self._width))
                 completed = True
             elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
-                self._main_window.display_file_handler.add_object(
+                self._main_window.display_file.add(
                     Wireframe(self._temp_coords.copy(), "Wireframe", self._color, self._width))
                 completed = True
 
             if completed:
-                self._focus_object = self._main_window.display_file_handler.objects[-1]
+                self._focus_object = self._main_window.display_file.objects[-1]
                 self._rotation_anchor = self._focus_object.position
                 self.update_spin_buttons()
                 self._temp_coords.clear()
 
-    def set_type(self, user_data, mode: ObjectType) -> None:
+    def set_type(self, user_data, mode: ObjectType):
         # Define o tipo.
         if not self._user_call_lock:
             return
@@ -166,32 +164,20 @@ class EditorHandler():
 
         self._temp_coords.clear()
 
-    def set_width(self, user_data) -> None:
+    def set_width(self, user_data):
         self._width = self._width_button.get_value()
 
-    def set_color(self, user_data) -> None:
+    def set_color(self, user_data):
         rgba = Gdk.RGBA(red=1.000000, green=1.000000, blue=1.000000, alpha=1.000000)
         self._color = (rgba.red, rgba.green, rgba.blue)
 
-    def set_edges(self, user_data) -> None:
+    def set_edges(self, user_data):
         self._edges = self._edges_button.get_value_as_int()
 
-    def clear(self, user_data) -> None:
-        self._main_window.display_file_handler.clear_all()
+    def clear(self, user_data):
+        self._main_window.display_file.clear_all()
 
-    def update_position(self, user_data) -> None:
-        # Atualiza a posição
-        if self._user_call_lock and self._focus_object is not None:
-            diff_x = self._position_x_button.get_value() - self._focus_object.position.x
-            diff_y = self._position_y_button.get_value() - self._focus_object.position.y
-            diff_z = self._position_z_button.get_value() - self._focus_object.position.z
-
-            self._focus_object.translate(Vector(diff_x, diff_y, diff_z))
-
-            object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
-            self._main_window.display_file_handler.update_object_info(object_index)
-
-    def update_scale(self, user_data) -> None:
+    def update_scale(self, user_data):
         # Atualiza a escala
         if self._user_call_lock and self._focus_object is not None:
             diff_x = self._scale_x_button.get_value() / self._focus_object.scale.x
@@ -200,16 +186,19 @@ class EditorHandler():
 
             self._focus_object.rescale(Vector(diff_x, diff_y, diff_z))
 
-    def update_rotation(self, user_data) -> None:
-        # Atualiza a rotação
+    def update_position(self, user_data):
+        # Atualiza a posição
         if self._user_call_lock and self._focus_object is not None:
-            diff_x = self._rotation_x_button.get_value() - self._focus_object.rotation.x
-            diff_y = self._rotation_y_button.get_value() - self._focus_object.rotation.y
-            diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
+            diff_x = self._position_x_button.get_value() - self._focus_object.position.x
+            diff_y = self._position_y_button.get_value() - self._focus_object.position.y
+            diff_z = self._position_z_button.get_value() - self._focus_object.position.z
 
-            self._focus_object.rotate(diff_z)
+            self._focus_object.translate(Vector(diff_x, diff_y, diff_z))
 
-    def update_rotation_anchor(self, user_data) -> None:
+            object_index = self._main_window.display_file.objects.index(self._focus_object)
+            self._main_window.display_file.update(object_index)
+
+    def update_rotation_anchor(self, user_data):
         # Atualiza o ponto de ancoragem da rotação.
         if self._user_call_lock:
             anchor_x = self._rotation_anchor_button_x.get_value()
@@ -217,3 +206,12 @@ class EditorHandler():
             anchor_z = self._rotation_anchor_button_z.get_value()
 
             self._rotation_anchor = Vector(anchor_x, anchor_y, anchor_z)
+
+    def update_rotation(self, user_data):
+        # Atualiza a rotação
+        if self._user_call_lock and self._focus_object is not None:
+            diff_x = self._rotation_x_button.get_value() - self._focus_object.rotation.x
+            diff_y = self._rotation_y_button.get_value() - self._focus_object.rotation.y
+            diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
+
+            self._focus_object.rotate(diff_z)

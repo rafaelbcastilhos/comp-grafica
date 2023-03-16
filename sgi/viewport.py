@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from source.transform import Vector
-from source.wireframe import Rectangle
-from source.displayfile import DisplayFileHandler
+from sgi.transform import Vector
+from sgi.object import Rectangle
+from sgi.displayfile import DisplayFile
 import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
 
-class ViewportHandler():
-    # Atributos privados
+class Viewport():
     _main_window: None
     _drawing_area: Gtk.DrawingArea
     _bg_color: tuple
@@ -18,10 +17,9 @@ class ViewportHandler():
     _drag_coord: Vector
 
     def __init__(self,
-                 main_window: DisplayFileHandler,
+                 main_window: DisplayFile,
                  drawing_area: Gtk.DrawingArea,
-                 bg_color: tuple = (0, 0, 0)) -> None:
-
+                 bg_color: tuple = (0, 0, 0)):
         self._main_window = main_window
         self._drawing_area = drawing_area
         self._drawing_area.connect("draw", self.on_draw)
@@ -35,7 +33,7 @@ class ViewportHandler():
         self._window = Rectangle(Vector(0.0, 0.0), Vector(922.0, 623.0), "Window", (0.5, 0.0, 0.5), 1.0)
         self._drag_coord = None
 
-    def coords_to_screen(self, coord: Vector) -> Vector:
+    def coords_to_screen(self, coord: Vector):
         # Converte a coordenada de mundo para uma coordenada de tela.
         origin = self._window.origin
         extension = self._window.extension
@@ -45,7 +43,7 @@ class ViewportHandler():
 
         return Vector(x, y)
 
-    def screen_to_coords(self, coord: Vector) -> Vector:
+    def screen_to_coords(self, coord: Vector):
         # Converte a coordenada de tela para uma coordenada de mundo.
 
         origin = self._window.origin
@@ -56,16 +54,14 @@ class ViewportHandler():
 
         return Vector(x, y)
 
-    def coords_to_lines(self, coords: list[Vector]) -> list[tuple]:
+    def coords_to_lines(self, coords: list[Vector]):
         # Converte coordenadas normais para linhas.
         lines = []
 
         if len(coords) == 1:
             lines.append((coords[0], Vector(coords[0].x + 1, coords[0].y)))
         else:
-
             for i, _ in enumerate(coords):
-
                 if i < len(coords) - 1:
                     lines.append((coords[i], coords[i + 1]))
 
@@ -75,24 +71,22 @@ class ViewportHandler():
         return lines
 
     # Handlers
-    def on_draw(self, area, context) -> None:
+    def on_draw(self, area, context):
         # Background
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
         context.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
         context.fill()
 
         # Renderiza todos os objetos do display file
-        for obj in self._main_window.display_file_handler.objects + [self._window]:
-
+        for obj in self._main_window.display_file.objects + [self._window]:
             screen_coords = list(map(self.coords_to_screen, obj.coord_list))
             lines = self.coords_to_lines(screen_coords)
             color = obj.color
             line_width = obj.line_width
 
-            # Define cor e largura do pincel
+            # Define cor e largura
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
-
 
             for line in lines:
                 context.move_to(line[0].x, line[0].y)
@@ -101,15 +95,12 @@ class ViewportHandler():
 
         self._drawing_area.queue_draw()
 
-    def on_button_press(self, widget, event) -> None:
-        '''
-        Evento de clique.
-        '''
-
+    def on_button_press(self, widget, event):
+        # Evento de clique.
         position = Vector(event.x, event.y)
 
         if event.button == 1:
-            self._main_window.editor_handler.click(self.screen_to_coords(position))
+            self._main_window.editor.click(self.screen_to_coords(position))
         elif event.button == 2:
             self._drag_coord = position
 
@@ -123,12 +114,12 @@ class ViewportHandler():
             self._window.translate(diff)
             self._drag_coord = position
 
-    def on_button_release(self, widget, event) -> None:
+    def on_button_release(self, widget, event):
         # Evento de liberação do mouse.
         if event.button == 2:
             self._drag_coord = None
 
-    def on_scroll(self, widget, event) -> None:
+    def on_scroll(self, widget, event):
         # Evento de scroll
         direction = event.get_scroll_deltas()[2]
 

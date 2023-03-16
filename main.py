@@ -5,7 +5,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-from source.interface import MainWindow
+from sgi.interface import MainWindow
 
 main_window = MainWindow()
 main_window.show()

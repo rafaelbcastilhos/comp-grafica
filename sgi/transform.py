@@ -11,16 +11,15 @@ class Vector():
 
     _list: list
 
-    def __init__(self, x: float, y: float, z: float = 0.0) -> None:
-
+    def __init__(self, x: float, y: float, z: float = 0.0):
         self.x = x
         self.y = y
         self.z = z
 
-    def __repr__(self) -> str:
+    def __repr__(self) :
         return f"{self.x:.2f}, {self.y:.2f}, {self.z:.2f}"
 
-    def __str__(self) -> str:
+    def __str__(self) :
         return f"{self.x:.2f}, {self.y:.2f}, {self.z:.2f}"
 
     def __add__(self, other):
@@ -53,7 +52,7 @@ class Transform():
     def __init__(self,
                  position: Vector,
                  rotation: Vector = Vector(0.0, 0.0, 0.0),
-                 scale: Vector = Vector(1.0, 1.0, 1.0)) -> None:
+                 scale: Vector = Vector(1.0, 1.0, 1.0)):
         self._position = position
         self._rotation = rotation
         self._scale = scale
@@ -93,37 +92,37 @@ class Transform():
                                             [0.0, 0.0, 0.0, 1.0]])
 
 
-    def __repr__(self) -> str:
+    def __repr__(self) :
         return str(f"P: {self.position}, S: {self.scale}, R: {self._rotation}")
 
-    def __str__(self) -> str:
+    def __str__(self) :
         return str(f"P: {self.position}, S: {self.scale}, R: {self._rotation}")
 
     @property
-    def position(self) -> Vector:
+    def position(self):
         return self._position
 
     @property
-    def scale(self) -> Vector:
+    def scale(self):
         return self._scale
 
     @property
-    def rotation(self) -> Vector:
+    def rotation(self):
         return self._rotation
 
-    def coords_to_local(self, coord: Vector, anchor: Vector = None) -> Vector:
+    def coords_to_local(self, coord: Vector, anchor: Vector = None):
         if anchor is None:
             return coord - self.position
         else:
             return coord - anchor
 
-    def local_to_coords(self, coord: Vector, anchor: Vector = None) -> Vector:
+    def local_to_coords(self, coord: Vector, anchor: Vector = None):
         if anchor is None:
             return coord + self.position
         else:
             return coord + anchor
 
-    def translate(self, direction: Vector, coord_list: list[Vector]) -> list:
+    def translate(self, direction: Vector, coord_list: list[Vector]):
         self._position += direction
 
         self._translation_matrix[0, 3] = direction.x
@@ -140,9 +139,8 @@ class Transform():
 
         return new_coord_list
 
-    def rescale(self, scale: Vector, coord_list: list[Vector]) -> list:
+    def rescale(self, scale: Vector, coord_list: list[Vector]):
         # Transformação de escala.
-
         self._scale.x *= scale.x
         self._scale.y *= scale.y
         self._scale.z *= scale.z
@@ -162,9 +160,8 @@ class Transform():
 
         return new_coord_list
 
-    def rotate(self, angle: float, coord_list: list[Vector], anchor: Vector = None) -> list:
+    def rotate(self, angle: float, coord_list: list[Vector], anchor: Vector = None):
         # Rotaciona o objeto em relação à um ponto.
-
         self._rotation.z = (self._rotation.z + angle) % 360
 
         angle_cos = cos(radians(angle))
