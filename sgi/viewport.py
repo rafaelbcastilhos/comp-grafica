@@ -70,7 +70,6 @@ class Viewport():
 
         return lines
 
-    # Handlers
     def on_draw(self, area, context):
         # Background
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
@@ -137,5 +136,4 @@ class Viewport():
 
         self._window.rescale(diff)
         self._window.rescale(Vector(user_data.width / self._window.extension.x,
-                                    user_data.height / self._window.extension.y,
-                                    1.0))
+                                    user_data.height / self._window.extension.y, 1.0))
