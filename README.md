@@ -1,4 +1,5 @@
 # ine5420
+### Grupo 7: José Victor Goulart dos Santos (20200412) e Rafael Begnini de Castilhos (20205642)
 
 ## Sistema gráfico interativo
 
