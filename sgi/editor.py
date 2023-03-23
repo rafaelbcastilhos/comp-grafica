@@ -32,6 +32,17 @@ class Editor():
     _rotation_x_button: Gtk.SpinButton
     _rotation_y_button: Gtk.SpinButton
     _rotation_z_button: Gtk.SpinButton
+    _translate_x_button: Gtk.SpinButton
+    _translate_y_button: Gtk.SpinButton
+    _translate_z_button: Gtk.SpinButton
+    _rescale_x_button: Gtk.SpinButton
+    _rescale_y_button: Gtk.SpinButton
+    _rescale_z_button: Gtk.SpinButton
+    _rotation_button: Gtk.SpinButton
+    _rotation_anchor_button: Gtk.Button
+    _rotation_anchor_button_x: Gtk.SpinButton
+    _rotation_anchor_button_y: Gtk.SpinButton
+    _rotation_anchor_button_z: Gtk.SpinButton
     _user_call_lock: bool
 
     def __init__(self,
@@ -39,6 +50,7 @@ class Editor():
                  point_button: Gtk.ToggleButton,
                  line_button: Gtk.ToggleButton,
                  polygon_button: Gtk.ToggleButton,
+                 color_button: Gtk.ColorButton,
                  edges_button: Gtk.SpinButton,
                  remove_button: Gtk.Button,
                  position_x_button: Gtk.SpinButton,
@@ -49,7 +61,21 @@ class Editor():
                  scale_z_button: Gtk.SpinButton,
                  rotation_x_button: Gtk.SpinButton,
                  rotation_y_button: Gtk.SpinButton,
-                 rotation_z_button: Gtk.SpinButton):
+                 rotation_z_button: Gtk.SpinButton,
+                 translate_x_button: Gtk.SpinButton,
+                 translate_y_button: Gtk.SpinButton,
+                 translate_z_button: Gtk.SpinButton,
+                 apply_translation_button: Gtk.Button,
+                 rescale_x_button: Gtk.SpinButton,
+                 rescale_y_button: Gtk.SpinButton,
+                 rescale_z_button: Gtk.SpinButton,
+                 apply_scaling_button: Gtk.Button,
+                 rotation_button: Gtk.SpinButton,
+                 apply_rotation_button: Gtk.Button,
+                 rotation_anchor_button: Gtk.Button,
+                 rotation_anchor_button_x: Gtk.SpinButton,
+                 rotation_anchor_button_y: Gtk.SpinButton,
+                 rotation_anchor_button_z: Gtk.SpinButton):
 
         self._main_window = main_window
         self._focus_object = None
@@ -60,8 +86,9 @@ class Editor():
         self._edges = 3
         self._rotation_anchor = None
 
-        self._color_button = [1.0, 1.0, 1.0]
+        self._color_button = color_button
         self._edges_button = edges_button
+        self._color_button.connect("color-set", self.set_color)
         self._edges_button.connect("value-changed", self.set_edges)
 
         self._point_button = point_button
@@ -94,6 +121,38 @@ class Editor():
         self._rotation_y_button.connect("value-changed", self.update_rotation)
         self._rotation_z_button.connect("value-changed", self.update_rotation)
 
+        self._translate_x_button = translate_x_button
+        self._translate_y_button = translate_y_button
+        self._translate_z_button = translate_z_button
+
+        self._rescale_x_button = rescale_x_button
+        self._rescale_y_button = rescale_y_button
+        self._rescale_z_button = rescale_z_button
+
+        self._rotation_button = rotation_button
+        self._rotation_anchor_button = rotation_anchor_button
+        self._rotation_anchor_button_x = rotation_anchor_button_x
+        self._rotation_anchor_button_y = rotation_anchor_button_y
+        self._rotation_anchor_button_z = rotation_anchor_button_z
+
+        apply_translation_button.connect("clicked", self.translate)
+        apply_scaling_button.connect("clicked", self.rescale)
+        apply_rotation_button.connect("clicked", self.rotate)
+        self._rotation_anchor_button.connect("clicked", self.change_rotation_anchor)
+
+        self._position_x_button.connect("value-changed", self.update_position)
+        self._position_y_button.connect("value-changed", self.update_position)
+        self._position_z_button.connect("value-changed", self.update_position)
+        self._scale_x_button.connect("value-changed", self.update_scale)
+        self._scale_y_button.connect("value-changed", self.update_scale)
+        self._scale_z_button.connect("value-changed", self.update_scale)
+        self._rotation_x_button.connect("value-changed", self.update_rotation)
+        self._rotation_y_button.connect("value-changed", self.update_rotation)
+        self._rotation_z_button.connect("value-changed", self.update_rotation)
+        self._rotation_anchor_button_x.connect("value-changed", self.update_rotation_anchor)
+        self._rotation_anchor_button_y.connect("value-changed", self.update_rotation_anchor)
+        self._rotation_anchor_button_z.connect("value-changed", self.update_rotation_anchor)
+
         self._user_call_lock = True
 
     def update_toggle_buttons(self, mode: ObjectType):
@@ -120,6 +179,9 @@ class Editor():
         self._rotation_x_button.set_value(self._focus_object.rotation.x)
         self._rotation_y_button.set_value(self._focus_object.rotation.y)
         self._rotation_z_button.set_value(self._focus_object.rotation.z)
+        self._rotation_anchor_button_x.set_value(self._rotation_anchor.x)
+        self._rotation_anchor_button_y.set_value(self._rotation_anchor.y)
+        self._rotation_anchor_button_z.set_value(self._rotation_anchor.z)
         self._user_call_lock = True
 
     def click(self, position: Vector):
@@ -168,7 +230,7 @@ class Editor():
         self._width = self._width_button.get_value()
 
     def set_color(self, user_data):
-        rgba = Gdk.RGBA(red=1.000000, green=1.000000, blue=1.000000, alpha=1.000000)
+        rgba = self._color_button.get_rgba()
         self._color = (rgba.red, rgba.green, rgba.blue)
 
     def set_edges(self, user_data):
@@ -176,6 +238,82 @@ class Editor():
 
     def clear(self, user_data):
         self._main_window.display_file.clear_all()
+
+    def translate(self, user_data) -> None:
+        '''
+        Aplica a translação no objeto em foco.
+        '''
+
+        if self._focus_object is not None:
+
+            translation_x = self._translate_x_button.get_value()
+            translation_y = self._translate_y_button.get_value()
+            translation_z = self._translate_z_button.get_value()
+
+            self._focus_object.translate(Vector(translation_x, translation_y, translation_z))
+            self.update_spin_buttons()
+
+            object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
+            self._main_window.display_file_handler.update_object_info(object_index)
+
+    def rescale(self, user_data) -> None:
+        '''
+        Aplica a escala no objeto em foco.
+        '''
+
+        if self._focus_object is not None:
+
+            scale_x = self._rescale_x_button.get_value()
+            scale_y = self._rescale_y_button.get_value()
+            scale_z = self._rescale_z_button.get_value()
+
+            self._focus_object.rescale(Vector(scale_x, scale_y, scale_z))
+            self.update_spin_buttons()
+
+    def rotate(self, user_data) -> None:
+        '''
+        Aplica a rotação no objeto em foco.
+        '''
+
+        if self._focus_object is not None:
+
+            angle = self._rotation_button.get_value()
+
+            self._focus_object.rotate(angle, self._rotation_anchor)
+            self.update_spin_buttons()
+
+    def change_rotation_anchor(self, user_data) -> None:
+        '''
+        Muda a ancoragem da rotação.
+        '''
+
+        match self._rotation_anchor_button.get_label():
+            case "Object":
+
+                self._rotation_anchor = Vector(0.0, 0.0, 0.0)
+                self.update_spin_buttons()
+                self._rotation_anchor_button.set_label("World")
+            case "World":
+
+                self._rotation_anchor.x = self._rotation_anchor_button_x.get_value()
+                self._rotation_anchor.y = self._rotation_anchor_button_y.get_value()
+                self._rotation_anchor.z = self._rotation_anchor_button_z.get_value()
+                self._rotation_anchor_button_x.set_editable(True)
+                self._rotation_anchor_button_y.set_editable(True)
+                self._rotation_anchor_button_z.set_editable(True)
+                self._rotation_anchor_button.set_label("Specified")
+            case "Specified":
+
+                if self._focus_object is not None:
+                    self._rotation_anchor = self._focus_object.position
+                else:
+                    self._rotation_anchor = Vector(0.0, 0.0, 0.0)
+
+                self._rotation_anchor_button_x.set_editable(False)
+                self._rotation_anchor_button_y.set_editable(False)
+                self._rotation_anchor_button_z.set_editable(False)
+                self.update_spin_buttons()
+                self._rotation_anchor_button.set_label("Object")
 
     def update_scale(self, user_data):
         # Atualiza a escala
