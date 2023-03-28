@@ -45,7 +45,6 @@ class Viewport():
 
     def screen_to_coords(self, coord: Vector):
         # Converte a coordenada de tela para uma coordenada de mundo.
-
         origin = self._window.origin
         extension = self._window.extension
 

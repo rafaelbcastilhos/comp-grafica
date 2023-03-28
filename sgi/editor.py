@@ -240,80 +240,58 @@ class Editor():
         self._main_window.display_file.clear_all()
 
     def translate(self, user_data) -> None:
-        '''
-        Aplica a translação no objeto em foco.
-        '''
-
+        # Aplica a translação no objeto.
         if self._focus_object is not None:
-
             translation_x = self._translate_x_button.get_value()
             translation_y = self._translate_y_button.get_value()
             translation_z = self._translate_z_button.get_value()
-
             self._focus_object.translate(Vector(translation_x, translation_y, translation_z))
             self.update_spin_buttons()
-
             object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
             self._main_window.display_file_handler.update_object_info(object_index)
 
     def rescale(self, user_data) -> None:
-        '''
-        Aplica a escala no objeto em foco.
-        '''
-
+        # Aplica a escala no objeto.
         if self._focus_object is not None:
-
             scale_x = self._rescale_x_button.get_value()
             scale_y = self._rescale_y_button.get_value()
             scale_z = self._rescale_z_button.get_value()
-
             self._focus_object.rescale(Vector(scale_x, scale_y, scale_z))
             self.update_spin_buttons()
 
     def rotate(self, user_data) -> None:
-        '''
-        Aplica a rotação no objeto em foco.
-        '''
-
+        # Aplica a rotação no objeto.
         if self._focus_object is not None:
-
             angle = self._rotation_button.get_value()
-
             self._focus_object.rotate(angle, self._rotation_anchor)
             self.update_spin_buttons()
 
     def change_rotation_anchor(self, user_data) -> None:
-        '''
-        Muda a ancoragem da rotação.
-        '''
-
+        # Muda a rotação definido pela âncora.
         match self._anchor_button.get_label():
             case "Object":
-
+                self._anchor_button.set_label("World")
                 self._rotation_anchor = Vector(0.0, 0.0, 0.0)
                 self.update_spin_buttons()
-                self._anchor_button.set_label("World")
             case "World":
-
                 self._rotation_anchor.x = self._anchor_button_x.get_value()
                 self._rotation_anchor.y = self._anchor_button_y.get_value()
                 self._rotation_anchor.z = self._anchor_button_z.get_value()
+                self._anchor_button.set_label("Specified")
                 self._anchor_button_x.set_editable(True)
                 self._anchor_button_y.set_editable(True)
                 self._anchor_button_z.set_editable(True)
-                self._anchor_button.set_label("Specified")
             case "Specified":
-
                 if self._focus_object is not None:
                     self._rotation_anchor = self._focus_object.position
                 else:
                     self._rotation_anchor = Vector(0.0, 0.0, 0.0)
 
+                self._anchor_button.set_label("Object")
                 self._anchor_button_x.set_editable(False)
                 self._anchor_button_y.set_editable(False)
                 self._anchor_button_z.set_editable(False)
                 self.update_spin_buttons()
-                self._anchor_button.set_label("Object")
 
     def update_scale(self, user_data):
         # Atualiza a escala

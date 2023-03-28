@@ -133,7 +133,6 @@ class Transform():
 
         # Translação de coordenadas
         for coord in coord_list:
-
             new_coord = np.matmul(self._translation_matrix, [coord.x, coord.y, coord.z, 1])
             new_coord_list.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
 
