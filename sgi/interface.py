@@ -45,10 +45,10 @@ class MainWindow(Gtk.Window):
     apply_scaling_button: Gtk.Button = Gtk.Template.Child()
     rotation_button: Gtk.SpinButton = Gtk.Template.Child()
     apply_rotation_button: Gtk.Button = Gtk.Template.Child()
-    rotation_anchor_button: Gtk.Button = Gtk.Template.Child()
-    rotation_anchor_button_x: Gtk.SpinButton = Gtk.Template.Child()
-    rotation_anchor_button_y: Gtk.SpinButton = Gtk.Template.Child()
-    rotation_anchor_button_z: Gtk.SpinButton = Gtk.Template.Child()
+    anchor_button: Gtk.Button = Gtk.Template.Child()
+    anchor_button_x: Gtk.SpinButton = Gtk.Template.Child()
+    anchor_button_y: Gtk.SpinButton = Gtk.Template.Child()
+    anchor_button_z: Gtk.SpinButton = Gtk.Template.Child()
 
     def __init__(self):
         super().__init__()
@@ -79,10 +79,10 @@ class MainWindow(Gtk.Window):
                                             self.apply_scaling_button,
                                             self.rotation_button,
                                             self.apply_rotation_button,
-                                            self.rotation_anchor_button,
-                                            self.rotation_anchor_button_x,
-                                            self.rotation_anchor_button_y,
-                                            self.rotation_anchor_button_z)
+                                            self.anchor_button,
+                                            self.anchor_button_x,
+                                            self.anchor_button_y,
+                                            self.anchor_button_z)
         self.viewport = Viewport(self, self.drawing_area)
 
         self.connect("destroy", Gtk.main_quit)

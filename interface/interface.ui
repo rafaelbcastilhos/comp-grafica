@@ -1067,7 +1067,7 @@
                                     <property name="can-focus">False</property>
                                     <property name="margin-top">11</property>
                                     <property name="margin-bottom">5</property>
-                                    <property name="label" translatable="yes">Rotation anchor</property>
+                                    <property name="label" translatable="yes">Anchor</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -1076,9 +1076,9 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="rotation_anchor_button">
+                                  <object class="GtkButton" id="anchor_button">
                                     <property name="label" translatable="yes">Object</property>
-                                    <property name="name">rotation_anchor_button</property>
+                                    <property name="name">anchor_button</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
                                     <property name="receives-default">True</property>
@@ -1144,7 +1144,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="rotation_anchor_button_x">
+                              <object class="GtkSpinButton" id="anchor_button_x">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="editable">False</property>
@@ -1157,7 +1157,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="rotation_anchor_button_y">
+                              <object class="GtkSpinButton" id="anchor_button_y">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="editable">False</property>
@@ -1170,7 +1170,7 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="rotation_anchor_button_z">
+                              <object class="GtkSpinButton" id="anchor_button_z">
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="editable">False</property>
