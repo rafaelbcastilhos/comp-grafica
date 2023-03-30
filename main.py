@@ -1,9 +1,20 @@
 # -*- coding: utf-8 -*-
 
+'''
+Sistema Gráfico Interativo (SGI)
+
+Autores:
+Eric Fernandes Evaristo (ErFer7)
+Luis Henrique Goulart Stemmer (lust2k)
+'''
+
+VERSION = "v0.4"
+
 import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+
 from sgi.interface import MainWindow
 
 main_window = MainWindow()
