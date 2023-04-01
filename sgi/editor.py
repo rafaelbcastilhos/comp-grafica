@@ -2,7 +2,7 @@
 
 import gi
 from sgi.transform import Vector
-from sgi.object import ObjectType, Object, Point, Line, Rectangle, Wireframe
+from sgi.object import ObjectType, Object, Point, Line, Rectangle, object
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
@@ -73,16 +73,16 @@ class Editor():
         self._rescale_y_button = self._main_window.rescale_y_button
         self._rescale_z_button = self._main_window.rescale_z_button
         self._rotation_button = self._main_window.rotation_button
-        self._rotation_anchor_button = self._main_window.anchor_button
+        self._rotation_anchor_button = self._main_window.rotation_anchor_button
         self._rotation_anchor_button_x = self._main_window.rotation_anchor_button_x
         self._rotation_anchor_button_y = self._main_window.rotation_anchor_button_y
         self._rotation_anchor_button_z = self._main_window.rotation_anchor_button_z
 
         self._color_button.connect("color-set", self.set_color)
         self._edges_button.connect("value-changed", self.set_edges)
-        self._point_button.connect("toggled", self.set_mode, ObjectType.POINT)
-        self._line_button.connect("toggled", self.set_mode, ObjectType.LINE)
-        self._polygon_button.connect("toggled", self.set_mode, ObjectType.POLYGON)
+        self._point_button.connect("toggled", self.set_type, ObjectType.POINT)
+        self._line_button.connect("toggled", self.set_type, ObjectType.LINE)
+        self._polygon_button.connect("toggled", self.set_type, ObjectType.POLYGON)
         self._main_window.remove_button.connect("clicked", self.remove)
         self._main_window.apply_translation_button.connect("clicked", self.translate)
         self._main_window.apply_scaling_button.connect("clicked", self.rescale)
@@ -104,7 +104,6 @@ class Editor():
         self._user_call_lock = True
 
     def update_spin_buttons(self):
-        # Atualiza todos os botões numéricos.
         self._user_call_lock = False
         self._position_x_button.set_value(self._focus_object.position.x)
         self._position_y_button.set_value(self._focus_object.position.y)
@@ -121,7 +120,6 @@ class Editor():
         self._user_call_lock = True
 
     def update_toggle_buttons(self, mode: ObjectType):
-        # Atualiza todos os botões de marcação
         self._user_call_lock = False
         match mode:
             case ObjectType.POINT:
@@ -134,14 +132,15 @@ class Editor():
 
     def click(self, position: Vector):
         if self._mode != ObjectType.NULL:
+
             self._temp_coords.append(position)
             object_completed = False
 
             if self._mode == ObjectType.POINT and len(self._temp_coords) >= 1:
-                self._main_window.display_file.add(Point(self._temp_coords[0], "Point", self._color))
+                self._main_window.display_file.add_object(Point(self._temp_coords[0], "Point", self._color))
                 object_completed = True
             elif self._mode == ObjectType.LINE and len(self._temp_coords) >= 2:
-                self._main_window.display_file.add(
+                self._main_window.display_file.add_object(
                     Line(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -149,11 +148,21 @@ class Editor():
                         self._color,
                         self._width))
                 object_completed = True
+            elif self._mode == ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
+                self._main_window.display_file.add_object(
+                    Rectangle(
+                        self._temp_coords[0],
+                        self._temp_coords[1],
+                        "Rectangle",
+                        self._color,
+                        self._width,
+                        True))
+                object_completed = True
             elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
-                self._main_window.display_file.add(
-                    Wireframe(
+                self._main_window.display_file.add_object(
+                    object(
                         self._temp_coords.copy(),
-                        "Wireframe",
+                        "object",
                         self._color,
                         self._width,
                         ObjectType.POLYGON,
@@ -166,15 +175,14 @@ class Editor():
                 self.update_spin_buttons()
                 self._temp_coords.clear()
 
-    def set_mode(self, user_data, mode: ObjectType):
-        # Define o modo.
-
+    def set_type(self, user_data, mode: ObjectType):
         if not self._user_call_lock:
             return
 
         self._focus_object = None
 
         if self._mode != mode:
+
             self.update_toggle_buttons(self._mode)
             self._mode = mode
         else:
@@ -198,7 +206,6 @@ class Editor():
         self._main_window.display_file.remove_last()
 
     def translate(self, user_data):
-        # Aplica a translação no objeto.
         if self._focus_object is not None:
             translation_x = self._translate_x_button.get_value()
             translation_y = self._translate_y_button.get_value()
@@ -208,11 +215,10 @@ class Editor():
             self.update_spin_buttons()
 
             object_index = self._main_window.display_file.objects.index(self._focus_object)
-            self._main_window.display_file.update(object_index)
+            self._main_window.display_file.update_object_info(object_index)
             self._main_window.display_file.request_normalization()
 
     def rescale(self, user_data):
-        # Aplica a escala no objeto.
         if self._focus_object is not None:
             scale_x = self._rescale_x_button.get_value()
             scale_y = self._rescale_y_button.get_value()
@@ -223,16 +229,14 @@ class Editor():
             self._main_window.display_file.request_normalization()
 
     def rotate(self, user_data):
-        # Aplica a rotação no objeto.
         if self._focus_object is not None:
             angle = self._rotation_button.get_value()
+
             self._focus_object.rotate(angle, self._rotation_anchor)
             self.update_spin_buttons()
             self._main_window.display_file.request_normalization()
 
     def change_rotation_anchor(self, user_data):
-        # Muda a ancoragem.
-
         match self._rotation_anchor_button.get_label():
             case "Object":
                 self._rotation_anchor = Vector(0.0, 0.0, 0.0)
@@ -259,7 +263,6 @@ class Editor():
                 self._rotation_anchor_button.set_label("Object")
 
     def update_position(self, user_data):
-        # Atualiza a posição
         if self._user_call_lock and self._focus_object is not None:
             diff_x = self._position_x_button.get_value() - self._focus_object.position.x
             diff_y = self._position_y_button.get_value() - self._focus_object.position.y
@@ -268,12 +271,10 @@ class Editor():
             self._focus_object.translate(Vector(diff_x, diff_y, diff_z))
 
             object_index = self._main_window.display_file.objects.index(self._focus_object)
-            self._main_window.display_file.update(object_index)
+            self._main_window.display_file.update_object_info(object_index)
             self._main_window.display_file.request_normalization()
 
     def update_scale(self, user_data):
-        # Atualiza a escala
-
         if self._user_call_lock and self._focus_object is not None:
             diff_x = self._scale_x_button.get_value() / self._focus_object.scale.x
             diff_y = self._scale_y_button.get_value() / self._focus_object.scale.y
@@ -283,16 +284,16 @@ class Editor():
             self._main_window.display_file.request_normalization()
 
     def update_rotation(self, user_data):
-        # Atualiza a rotação
         if self._user_call_lock and self._focus_object is not None:
             diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
+
             self._focus_object.rotate(diff_z)
             self._main_window.display_file.request_normalization()
 
     def update_rotation_anchor(self, user_data):
-        # Atualiza o ponto de ancoragem da rotação.
         if self._user_call_lock:
             anchor_x = self._rotation_anchor_button_x.get_value()
             anchor_y = self._rotation_anchor_button_y.get_value()
             anchor_z = self._rotation_anchor_button_z.get_value()
+
             self._rotation_anchor = Vector(anchor_x, anchor_y, anchor_z)

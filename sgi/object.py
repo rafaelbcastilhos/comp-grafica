@@ -112,7 +112,7 @@ class Line(Object):
         return self.coords[1]
 
 
-class Wireframe(Object):
+class object(Object):
     def __init__(self,
                  coords: list[Vector],
                  name: str = '',
@@ -124,7 +124,7 @@ class Wireframe(Object):
         super().__init__(coords, name, color, line_width, object_type, fill)
 
 
-class Rectangle(Wireframe):
+class Rectangle(object):
     def __init__(self,
                  origin: Vector,
                  extension: Vector,

@@ -9,8 +9,13 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
+
+class ClippingMethod(Enum):
+    LIANG_BARSKY = 1
+    COHEN_SUTHERLAND = 2
+
+
 class Intersection(Enum):
-    # Tipos de interseção.
     NULL = 1
     LEFT = 2
     RIGHT = 3
@@ -25,6 +30,7 @@ class Viewport():
     _window: Window
     _drag_coord: Vector
     _viewport_padding: Vector
+    _clipping_method: ClippingMethod
 
     def __init__(self,
                  main_window: DisplayFile,
@@ -45,9 +51,9 @@ class Viewport():
         self._window = Window(Vector(-500.0, -500.0), Vector(500.0, 500.0), (1.0, 0.0, 0.0), 2.0)
         self._drag_coord = None
         self._viewport_padding = viewport_padding
+        self._clipping_method = ClippingMethod.LIANG_BARSKY
 
     def world_to_screen(self, coord: Vector):
-        # Converte a coordenada de mundo para uma coordenada de tela.
         origin = self._window.normalized_origin - self._viewport_padding
         extension = self._window.normalized_extension + self._viewport_padding
 
@@ -57,11 +63,9 @@ class Viewport():
         return Vector(x_s, y_s)
 
     def world_line_to_screen(self, line: list[Vector]):
-        # Converte uma linha no mundo para uma linha na tela.
         return (self.world_to_screen(line[0]), self.world_to_screen(line[1]))
 
     def screen_to_world(self, coord: Vector):
-        # Converte a coordenada de tela para uma coordenada de mundo.
         origin = self._window.origin - self._viewport_padding
         extension = self._window.extension + self._viewport_padding
 
@@ -71,14 +75,22 @@ class Viewport():
         return Vector(x_w, y_w)
 
     def clip_to_lines(self, coords: list[Vector]):
-        # O algoritmo de clipping de polígonos é o Sutherland-Hodgeman.
         clipped_lines = []
         coords_size = len(coords)
-        if coords_size == 2:
-            clipped_line = self.cohen_sutherland(coords)
-            if len(clipped_line) > 0:
-                clipped_lines.append(clipped_line)
 
+        if coords_size == 1:
+            if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
+               (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
+                clipped_lines.append([Vector(coords[0].x, coords[0].y), Vector(coords[0].x + 1, coords[0].y)])
+        elif coords_size == 2:
+            if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
+                clipped_line = self.cohen_sutherland(coords)
+                if len(clipped_line) > 0:
+                    clipped_lines.append(clipped_line)
+            else:
+                clipped_line = self.liang_barsky(coords)
+                if len(clipped_line) > 0:
+                    clipped_lines.append(clipped_line)
         else:
             clipped_lines = self.coords_to_lines(coords)
             clipped_coords = []
@@ -133,7 +145,6 @@ class Viewport():
                      inter_a: Intersection,
                      inter_b: Intersection,
                      drop_line: bool = True):
-        # Cacula a interseção do vetor com a window.
         angular_coeff = inf
 
         if (line[1].x - line[0].x) != 0:
@@ -142,33 +153,32 @@ class Viewport():
         new_line = []
 
         for inter, vector in zip([inter_a, inter_b], line):
-
             new_x = vector.x
             new_y = vector.y
 
             match inter:
-                case Intersection.RIGHT:
+                case Intersection.LEFT:
                     new_x = self._window.normalized_origin.x
                     new_y = angular_coeff * (self._window.normalized_origin.x - vector.x) + vector.y
 
                     if (new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y) and \
                        drop_line:
                         return []
-                case Intersection.LEFT:
+                case Intersection.RIGHT:
                     new_x = self._window.normalized_extension.x
                     new_y = angular_coeff * (self._window.normalized_extension.x - vector.x) + vector.y
 
                     if (new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y) and \
                        drop_line:
                         return []
-                case Intersection.BOTTOM:
+                case Intersection.TOP:
                     new_x = vector.x + (1.0 / angular_coeff) * (self._window.normalized_extension.y - vector.y)
                     new_y = self._window.normalized_extension.y
 
                     if (new_x < self._window.normalized_origin.x or new_x > self._window.normalized_extension.x) and \
                        drop_line:
                         return []
-                case Intersection.TOP:
+                case Intersection.BOTTOM:
                     new_x = vector.x + (1.0 / angular_coeff) * (self._window.normalized_origin.y - vector.y)
                     new_y = self._window.normalized_origin.y
 
@@ -181,17 +191,16 @@ class Viewport():
         return new_line
 
     def cohen_sutherland(self, line: list[Vector]):
-        # Clipping de algoritmo de Cohen-Shuterland.
         clipped_line = []
         region_codes = []
 
         for coord in line:
 
             region_code = 0b0000
-            region_code |= 0b0001 if coord.x < self._window.normalized_origin.x else 0b1000
-            region_code |= 0b0010 if coord.x > self._window.normalized_extension.x else 0b0100
+            region_code |= 0b0001 if coord.x < self._window.normalized_origin.x else 0b0000
+            region_code |= 0b0010 if coord.x > self._window.normalized_extension.x else 0b0000
             region_code |= 0b0100 if coord.y < self._window.normalized_origin.y else 0b0000
-            region_code |= 0b1000 if coord.y > self._window.normalized_extension.y else 0b0001
+            region_code |= 0b1000 if coord.y > self._window.normalized_extension.y else 0b0000
             region_codes.append(region_code)
 
         if region_codes[0] | region_codes[1] == 0b0000:
@@ -204,19 +213,35 @@ class Viewport():
                     case 0b0000:
                         intersections.append(Intersection.NULL)
                     case 0b0001:
-                        intersections.append(Intersection.BOTTOM)
+                        intersections.append(Intersection.LEFT)
                     case 0b0010:
                         intersections.append(Intersection.RIGHT)
                     case 0b1000:
-                        intersections.append(Intersection.LEFT)
+                        intersections.append(Intersection.TOP)
                     case 0b0100:
-                        intersections.append(Intersection.RIGHT)
+                        intersections.append(Intersection.BOTTOM)
                     case _:
                         intersections.append(None)
 
             if intersections[0] is not None and intersections[1] is not None:
                 clipped_line = self.intersection(line, intersections[0], intersections[1])
             else:
+                double_try_intersections = []
+
+                for intersection, region_code in zip(intersections, region_codes):
+                    if intersection is None:
+                        match region_code:
+                            case 0b1001:
+                                double_try_intersections.append((Intersection.LEFT, Intersection.TOP))
+                            case 0b0101:
+                                double_try_intersections.append((Intersection.LEFT, Intersection.BOTTOM))
+                            case 0b0110:
+                                double_try_intersections.append((Intersection.RIGHT, Intersection.BOTTOM))
+                            case 0b1010:
+                                double_try_intersections.append((Intersection.RIGHT, Intersection.TOP))
+                    else:
+                        double_try_intersections.append((intersection, None))
+
                 for try_index in [(0, 0), (0, 1), (1, 0), (1, 1)]:
                     clipped_line = self.intersection(line,
                                                      double_try_intersections[0][try_index[0]],
@@ -227,8 +252,57 @@ class Viewport():
 
         return clipped_line
 
+    def liang_barsky(self, line: list[Vector]):
+        p1 = -(line[1].x - line[0].x)
+        p2 = -p1
+        p3 = -(line[1].y - line[0].y)
+        p4 = -p3
+
+        q1 = line[0].x - self._window.normalized_origin.x
+        q2 = self._window.normalized_extension.x - line[0].x
+        q3 = line[0].y - self._window.normalized_origin.y
+        q4 = self._window.normalized_extension.y - line[0].y
+
+        positives = [1]
+        negatives = [0]
+
+        if (p1 == 0 and q1 < 0) or (p2 == 0 and q2 < 0) or (p3 == 0 and q3 < 0) or (p4 == 0 and q4 < 0):
+            return []
+
+        if p1 != 0:
+            ratio_1 = q1 / p1
+            ratio_2 = q2 / p2
+
+            if p1 < 0:
+                positives.append(ratio_2)
+                negatives.append(ratio_1)
+            else:
+                positives.append(ratio_1)
+                negatives.append(ratio_2)
+
+        if p3 != 0:
+            ratio_3 = q3 / p3
+            ratio_4 = q4 / p4
+
+            if p3 < 0:
+                positives.append(ratio_4)
+                negatives.append(ratio_3)
+            else:
+                positives.append(ratio_3)
+                negatives.append(ratio_4)
+
+        max_negative = max(negatives)
+        min_positive = min(positives)
+
+        if max_negative > min_positive:
+            return []
+
+        new_vector_a = Vector(line[0].x + p2 * max_negative, line[0].y + p4 * max_negative)
+        new_vector_b = Vector(line[0].x + p2 * min_positive, line[0].y + p4 * min_positive)
+
+        return [new_vector_a, new_vector_b]
+
     def coords_to_lines(self, coords: list[Vector]):
-        # Converte coordenadas normais para linhas.
         lines = []
 
         if len(coords) == 1:
@@ -243,20 +317,15 @@ class Viewport():
 
         return lines
 
-    # Handlers
     def on_draw(self, area, context):
-        # Normaliza os objetos
         self._main_window.display_file.normalize_objects(self._window)
 
-        # Preenche o fundo
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
         context.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
         context.fill()
 
-        # Renderiza todos os objetos do display file
         for obj in self._main_window.display_file.objects + [self._window]:
             clipped_coords = []
-
             if obj != self._window:
                 clipped_coords = self.clip_to_lines(obj.normalized_coords)
             else:
@@ -266,7 +335,6 @@ class Viewport():
             color = obj.color
             line_width = obj.line_width
 
-            # Define cor e largura do pincel
             context.new_path()
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
@@ -287,7 +355,6 @@ class Viewport():
         self._drawing_area.queue_draw()
 
     def on_button_press(self, widget, event):
-        # Evento de clique.
         position = Vector(event.x, event.y)
 
         if event.button == 1:
@@ -296,7 +363,6 @@ class Viewport():
             self._drag_coord = position
 
     def on_mouse_motion(self, widget, event):
-        # Evento de movimento.
         if self._drag_coord is not None:
             position = Vector(event.x, event.y)
             diff = self._drag_coord - position
@@ -306,12 +372,10 @@ class Viewport():
             self._drag_coord = position
 
     def on_button_release(self, widget, event):
-        # Evento de liberação do mouse.
         if event.button == 2:
             self._drag_coord = None
 
     def on_scroll(self, widget, event):
-        # Evento de rolagem:
         direction = event.get_scroll_deltas()[2]
 
         if direction > 0:
@@ -322,37 +386,30 @@ class Viewport():
         self._main_window.display_file.request_normalization()
 
     def on_size_allocate(self, allocation, user_data):
-        # Evento de alocação.
         self.reset_window_scale()
         self._main_window.display_file.request_normalization()
 
     def move_window(self, direction: Vector):
-        # Move a window.
         self._window.translate(direction, True)
         self._main_window.display_file.request_normalization()
 
     def reset_window_position(self):
-        # Redefine a posição da window.
         self._window.translate(self._window.position * -1)
         self._main_window.display_file.request_normalization()
 
     def rotate_window(self, angle: float):
-        # Rotaciona a window.
         self._window.rotate(angle)
         self._main_window.display_file.request_normalization()
 
     def reset_window_rotation(self):
-        # Redefine a rotação da window.
         self._window.rotate(-self._window.rotation.z)
         self._main_window.display_file.request_normalization()
 
     def reescale_window(self, scale: Vector):
-        # Reescala a window.
         self._window.rescale(scale)
         self._main_window.display_file.request_normalization()
 
     def reset_window_scale(self):
-        # Redefine a escala da window.
         diff_x = 1.0 / self._window.scale.x
         diff_y = 1.0 / self._window.scale.y
         diff_z = 1.0 / self._window.scale.z

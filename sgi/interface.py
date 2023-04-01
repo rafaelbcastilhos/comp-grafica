@@ -6,6 +6,7 @@ from sgi.displayfile import DisplayFile
 from sgi.editor import Editor
 from sgi.viewport import Viewport
 from sgi.transform import Vector
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
@@ -13,11 +14,13 @@ from gi.repository import Gtk, Gdk
 @Gtk.Template(filename=os.path.join(os.getcwd(), "interface", "interface.ui"))
 class MainWindow(Gtk.Window):
     __gtype_name__ = "MainWindow"
+
     viewport: Viewport
     display_file: DisplayFile
     editor: Editor
-
+    file_system: Editor
     viewport_drawing_area: Gtk.DrawingArea = Gtk.Template.Child()
+    file_button: Gtk.MenuItem = Gtk.Template.Child()
     point_button: Gtk.ToggleButton = Gtk.Template.Child()
     line_button: Gtk.ToggleButton = Gtk.Template.Child()
     polygon_button: Gtk.ToggleButton = Gtk.Template.Child()
@@ -44,7 +47,7 @@ class MainWindow(Gtk.Window):
     apply_scaling_button: Gtk.Button = Gtk.Template.Child()
     rotation_button: Gtk.SpinButton = Gtk.Template.Child()
     apply_rotation_button: Gtk.Button = Gtk.Template.Child()
-    anchor_button: Gtk.Button = Gtk.Template.Child()
+    rotation_anchor_button: Gtk.Button = Gtk.Template.Child()
     rotation_anchor_button_x: Gtk.SpinButton = Gtk.Template.Child()
     rotation_anchor_button_y: Gtk.SpinButton = Gtk.Template.Child()
     rotation_anchor_button_z: Gtk.SpinButton = Gtk.Template.Child()

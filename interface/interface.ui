@@ -178,6 +178,36 @@
         <property name="hexpand">True</property>
         <property name="vexpand">True</property>
         <child>
+          <object class="GtkMenuBar" id="toolbar">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <child>
+              <object class="GtkMenuItem" id="file_button">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">File</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left-attach">0</property>
+            <property name="top-attach">0</property>
+            <property name="width">5</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkScrolledWindow" id="draw_window">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
@@ -342,8 +372,8 @@
                                     <property name="receives-default">True</property>
                                   </object>
                                   <packing>
-                                    <property name="left-attach">1</property>
-                                    <property name="top-attach">0</property>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">1</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -354,8 +384,8 @@
                                     <property name="receives-default">True</property>
                                   </object>
                                   <packing>
-                                    <property name="left-attach">2</property>
-                                    <property name="top-attach">0</property>
+                                    <property name="left-attach">0</property>
+                                    <property name="top-attach">2</property>
                                   </packing>
                                 </child>
                                 <child>
@@ -370,14 +400,10 @@
                             </child>
                             <child>
                               <object class="GtkButton" id="remove_button">
-                                <property name="label" translatable="yes">Clear</property>
+                                <property name="label" translatable="yes">Remove</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">True</property>
                                 <property name="receives-default">True</property>
-                                <property name="halign">center</property>
-                                <property name="margin-start">11</property>
-                                <property name="margin-top">10</property>
-                                <property name="margin-bottom">10</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1055,7 +1081,7 @@
                                     <property name="can-focus">False</property>
                                     <property name="margin-top">11</property>
                                     <property name="margin-bottom">5</property>
-                                    <property name="label" translatable="yes">Anchor</property>
+                                    <property name="label" translatable="yes">Rotation anchor</property>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>
@@ -1064,9 +1090,9 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="anchor_button">
+                                  <object class="GtkButton" id="rotation_anchor_button">
                                     <property name="label" translatable="yes">Object</property>
-                                    <property name="name">anchor_button</property>
+                                    <property name="name">rotation_anchor_button</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
                                     <property name="receives-default">True</property>
