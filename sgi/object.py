@@ -92,7 +92,6 @@ class Point(Object):
     def coord(self):
         return self.coords[0]
 
-
 class Line(Object):
     def __init__(self,
                  position_a: Vector,
@@ -111,7 +110,6 @@ class Line(Object):
     def end(self):
         return self.coords[1]
 
-
 class object(Object):
     def __init__(self,
                  coords: list[Vector],
@@ -122,7 +120,6 @@ class object(Object):
                  fill: bool = False):
 
         super().__init__(coords, name, color, line_width, object_type, fill)
-
 
 class Rectangle(object):
     def __init__(self,
@@ -158,7 +155,6 @@ class Rectangle(object):
     @property
     def corner_b(self):
         return self.coords[3]
-
 
 class Window(Rectangle):
     def __init__(self,

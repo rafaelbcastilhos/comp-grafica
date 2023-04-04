@@ -137,10 +137,10 @@ class Editor():
             object_completed = False
 
             if self._mode == ObjectType.POINT and len(self._temp_coords) >= 1:
-                self._main_window.display_file.add_object(Point(self._temp_coords[0], "Point", self._color))
+                self._main_window.display_file.add(Point(self._temp_coords[0], "Point", self._color))
                 object_completed = True
             elif self._mode == ObjectType.LINE and len(self._temp_coords) >= 2:
-                self._main_window.display_file.add_object(
+                self._main_window.display_file.add(
                     Line(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -149,7 +149,7 @@ class Editor():
                         self._width))
                 object_completed = True
             elif self._mode == ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
-                self._main_window.display_file.add_object(
+                self._main_window.display_file.add(
                     Rectangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -159,7 +159,7 @@ class Editor():
                         True))
                 object_completed = True
             elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
-                self._main_window.display_file.add_object(
+                self._main_window.display_file.add(
                     object(
                         self._temp_coords.copy(),
                         "object",
@@ -215,7 +215,7 @@ class Editor():
             self.update_spin_buttons()
 
             object_index = self._main_window.display_file.objects.index(self._focus_object)
-            self._main_window.display_file.update_object_info(object_index)
+            self._main_window.display_file.update(object_index)
             self._main_window.display_file.request_normalization()
 
     def rescale(self, user_data):
@@ -271,7 +271,7 @@ class Editor():
             self._focus_object.translate(Vector(diff_x, diff_y, diff_z))
 
             object_index = self._main_window.display_file.objects.index(self._focus_object)
-            self._main_window.display_file.update_object_info(object_index)
+            self._main_window.display_file.update(object_index)
             self._main_window.display_file.request_normalization()
 
     def update_scale(self, user_data):

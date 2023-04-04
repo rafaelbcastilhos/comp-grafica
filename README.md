@@ -38,3 +38,17 @@ Para executar: `python3 main.py`
 - Na barra lateral esquerda, foi adicionado um botão para escolher a cor do objeto a ser criado.
 - Após selecionar o tipo do objeto, deve ser selecionado a cor (padrão é branco). 
 - Para os polígonos, apenas será pintado as bordas.
+
+## Trabalho 1.3:
+#### Viewport
+- Adição de viewport menor que o tamanho do objeto de desenho, para verificar que o algoritmo de clipagem de pontos está funcional
+
+#### Suporte para Sistema de Coordenadas Normalizado
+- Foi alterado a representação dos objetos do mundo para suportar o SCN.
+
+#### Zoom
+- Foi atualizado a translação e zoom da window para suportar o SCN.
+- Para realizar zoom in e zoom out, é necessário que realize o movimento com o scroll do mouse na região da viewport.
+
+#### Clipagem:
+- Implementado dois algoritmos (LIANG BARSKY e COHEN SUTHERLAND) para clipagem de pontos, retas e polígonos.

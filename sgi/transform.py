@@ -28,7 +28,6 @@ class Vector():
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
 
     def __mul__(self, other):
-
         result = None
         if isinstance(other, (float, int)):
             result = Vector(self.x * other, self.y * other, self.z * other)
@@ -65,7 +64,6 @@ class Transform():
                  position: Vector,
                  rotation: Vector = Vector(0.0, 0.0, 0.0),
                  scale: Vector = Vector(1.0, 1.0, 1.0)):
-
         self._position = position
         self._rotation = rotation
         self._scale = scale

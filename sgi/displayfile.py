@@ -18,19 +18,12 @@ class DisplayFile():
         self._all_objects_normalized = False
         self._display_file_list = display_file_list
 
-    def add_object(self, obj: Object):
+    def add(self, obj: Object):
         self.objects.append(obj)
         self._display_file_list.append([obj.name, str(obj.position)])
         self._all_objects_normalized = False
 
-    def remove_object(self, identification: str):
-        for obj in self.objects:
-            if obj.identification == identification:
-                self.objects.remove(obj)
-                self._all_objects_normalized = False
-                break
-
-    def update_object_info(self, index: int):
+    def update(self, index: int):
         self._display_file_list[index][1] = str(self.objects[index].position)
 
     def remove_last(self):

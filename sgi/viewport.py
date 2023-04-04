@@ -37,7 +37,6 @@ class Viewport():
                  drawing_area: Gtk.DrawingArea,
                  viewport_padding: Vector = Vector(0.0, 0.0, 0.0),
                  bg_color: tuple = (0, 0, 0)):
-
         self._main_window = main_window
         self._drawing_area = drawing_area
         self._drawing_area.connect("draw", self.on_draw)
@@ -52,6 +51,30 @@ class Viewport():
         self._drag_coord = None
         self._viewport_padding = viewport_padding
         self._clipping_method = ClippingMethod.LIANG_BARSKY
+
+    def reset_window_position(self):
+        self._window.translate(self._window.position * -1)
+        self._main_window.display_file.request_normalization()
+
+    def rotate_window(self, angle: float):
+        self._window.rotate(angle)
+        self._main_window.display_file.request_normalization()
+
+    def reset_window_rotation(self):
+        self._window.rotate(-self._window.rotation.z)
+        self._main_window.display_file.request_normalization()
+
+    def reescale_window(self, scale: Vector):
+        self._window.rescale(scale)
+        self._main_window.display_file.request_normalization()
+
+    def reset_window_scale(self):
+        diff_x = 1.0 / self._window.scale.x
+        diff_y = 1.0 / self._window.scale.y
+        diff_z = 1.0 / self._window.scale.z
+
+        self._window.rescale(Vector(diff_x, diff_y, diff_z))
+        self._main_window.display_file.request_normalization()
 
     def world_to_screen(self, coord: Vector):
         origin = self._window.normalized_origin - self._viewport_padding
@@ -80,7 +103,7 @@ class Viewport():
 
         if coords_size == 1:
             if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
-               (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
+                (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
                 clipped_lines.append([Vector(coords[0].x, coords[0].y), Vector(coords[0].x + 1, coords[0].y)])
         elif coords_size == 2:
             if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
@@ -195,7 +218,6 @@ class Viewport():
         region_codes = []
 
         for coord in line:
-
             region_code = 0b0000
             region_code |= 0b0001 if coord.x < self._window.normalized_origin.x else 0b0000
             region_code |= 0b0010 if coord.x > self._window.normalized_extension.x else 0b0000
@@ -207,7 +229,6 @@ class Viewport():
             clipped_line = line
         elif region_codes[0] & region_codes[1] == 0b0000:
             intersections = []
-
             for region_code in region_codes:
                 match region_code:
                     case 0b0000:
@@ -227,7 +248,6 @@ class Viewport():
                 clipped_line = self.intersection(line, intersections[0], intersections[1])
             else:
                 double_try_intersections = []
-
                 for intersection, region_code in zip(intersections, region_codes):
                     if intersection is None:
                         match region_code:
@@ -391,28 +411,4 @@ class Viewport():
 
     def move_window(self, direction: Vector):
         self._window.translate(direction, True)
-        self._main_window.display_file.request_normalization()
-
-    def reset_window_position(self):
-        self._window.translate(self._window.position * -1)
-        self._main_window.display_file.request_normalization()
-
-    def rotate_window(self, angle: float):
-        self._window.rotate(angle)
-        self._main_window.display_file.request_normalization()
-
-    def reset_window_rotation(self):
-        self._window.rotate(-self._window.rotation.z)
-        self._main_window.display_file.request_normalization()
-
-    def reescale_window(self, scale: Vector):
-        self._window.rescale(scale)
-        self._main_window.display_file.request_normalization()
-
-    def reset_window_scale(self):
-        diff_x = 1.0 / self._window.scale.x
-        diff_y = 1.0 / self._window.scale.y
-        diff_z = 1.0 / self._window.scale.z
-
-        self._window.rescale(Vector(diff_x, diff_y, diff_z))
         self._main_window.display_file.request_normalization()
