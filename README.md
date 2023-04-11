@@ -51,4 +51,25 @@ Para executar: `python3 main.py`
 - Para realizar zoom in e zoom out, é necessário que realize o movimento com o scroll do mouse na região da viewport.
 
 #### Clipagem:
-- Implementado dois algoritmos (LIANG BARSKY e COHEN SUTHERLAND) para clipagem de pontos, retas e polígonos.
+- Implementado duas técnicas (algoritmos de LIANG BARSKY e COHEN SUTHERLAND) para clipagem de pontos, retas e polígonos.
+
+## Trabalho 1.4:
+#### Viewport
+- Ajuste no tamanho da moldura do viewport. 
+- Ajuste no zoom in/out para suportar scroll do mouse. 
+
+#### Preenchimento
+- Adição de checkbox para suportar polígonos preenchidos, permitindo ao usuário escolher se o polígono é em modelo de arame ou preenchido no momento de sua criação.
+
+#### Atalhos no teclado:
+- Q: Rotaciona window para esquerda
+- E: Rotaciona window para direita
+- W: Move window para cima
+- A: Move window para esquerda
+- S: Move window para baixo
+- D: Move window para direita
+- R: Reseta posição da window
+- T: Reseta rotação da window
+- Y: Reseta escala da window
+- C: Zoom in da window
+- Z: Zoom out da window
