@@ -8,9 +8,10 @@ class Vector():
     x: float
     y: float
     z: float
+
     _list: list
 
-    def __init__(self, x: float, y: float, z: float = 0.0):
+    def __init__(self, x, y, z: float = 0.0):
         self.x = x
         self.y = y
         self.z = z
@@ -61,7 +62,7 @@ class Transform():
     _normalization_matrix: np.matrix
 
     def __init__(self,
-                 position: Vector,
+                 position,
                  rotation: Vector = Vector(0.0, 0.0, 0.0),
                  scale: Vector = Vector(1.0, 1.0, 1.0)):
         self._position = position
@@ -127,15 +128,15 @@ class Transform():
         return self._rotation
 
     @staticmethod
-    def world_to_local(coord: Vector, anchor: Vector):
+    def world_to_local(coord, anchor):
         return coord - anchor
 
     @staticmethod
-    def local_to_world(coord: Vector, anchor: Vector):
+    def local_to_world(coord, anchor):
         return coord + anchor
 
     @staticmethod
-    def translate_vector(direction: Vector, vector: Vector):
+    def translate_vector(direction, vector):
         translation_matrix = np.matrix([[1.0, 0.0, 0.0, direction.x],
                                         [0.0, 1.0, 0.0, direction.y],
                                         [0.0, 0.0, 1.0, direction.z],
@@ -146,7 +147,7 @@ class Transform():
         return Vector(new_vector[0, 0], new_vector[0, 1], new_vector[0, 2])
 
     @staticmethod
-    def reescale_vector(scale: Vector, vector: Vector, anchor: Vector):
+    def reescale_vector(scale, vector, anchor):
         scaling_matrix = np.matrix([[scale.x, 0.0, 0.0, 0.0],
                                     [0.0, scale.y, 0.0, 0.0],
                                     [0.0, 0.0, scale.z, 0.0],
@@ -158,7 +159,7 @@ class Transform():
         return Transform.local_to_world(Vector(new_vector[0, 0], new_vector[0, 1], new_vector[0, 2]), new_vector)
 
     @staticmethod
-    def rotate_vector(angle: float, vector: Vector, anchor: Vector):
+    def rotate_vector(angle, vector, anchor):
         angle_cos = cos(radians(angle))
         angle_sin = sin(radians(angle))
 
@@ -172,8 +173,8 @@ class Transform():
         return Transform.local_to_world(Vector(new_vector[0, 0], new_vector[0, 1], new_vector[0, 2]), anchor)
 
     def translate(self,
-                  direction: Vector,
-                  coords: list[Vector],
+                  direction,
+                  coords,
                   update_internal_vectors: bool = True):
         if update_internal_vectors:
             self._position += direction
@@ -191,8 +192,8 @@ class Transform():
         return new_coords
 
     def rescale(self,
-                scale: Vector,
-                coords: list[Vector],
+                scale,
+                coords,
                 anchor: Vector = None,
                 update_internal_vectors: bool = True):
         if update_internal_vectors:
@@ -218,8 +219,8 @@ class Transform():
         return new_coords
 
     def rotate(self,
-               angle: float,
-               coords: list[Vector],
+               angle,
+               coords,
                anchor: Vector = None,
                update_internal_vectors: bool = True):
         if update_internal_vectors:
@@ -252,12 +253,13 @@ class Transform():
         return new_coords
 
     def normalize(self,
-                  window_center: Vector,
-                  window_rotation: float,
-                  scale: Vector,
-                  coords: list[Vector]):
+                  window_center,
+                  window_rotation,
+                  scale,
+                  coords):
         new_coords = []
 
+        # Translação
         self._normalization_matrix[0, 3] = -window_center.x
         self._normalization_matrix[1, 3] = -window_center.y
         self._normalization_matrix[2, 3] = -window_center.z
@@ -265,6 +267,7 @@ class Transform():
         angle_cos = cos(radians(-window_rotation))
         angle_sin = sin(radians(-window_rotation))
 
+        # Escala e rotação
         self._normalization_matrix[0, 0] = angle_cos * scale.x
         self._normalization_matrix[0, 1] = -angle_sin * scale.y
         self._normalization_matrix[1, 0] = angle_sin * scale.x
