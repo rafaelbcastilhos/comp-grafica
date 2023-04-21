@@ -2,7 +2,7 @@
 
 from math import degrees
 import gi
-from sgi.wireframe import Object, Window
+from sgi.wireframe import Object, Window, BezierCurve
 from sgi.transform import Vector
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk

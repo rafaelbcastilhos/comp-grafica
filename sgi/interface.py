@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 
-'''
-Módulo para a interface de usuário.
-'''
-
 import os
 import gi
 from sgi.displayfile import DisplayFile
@@ -26,10 +22,17 @@ class MainWindow(Gtk.Window):
     point_button: Gtk.ToggleButton = Gtk.Template.Child()
     line_button: Gtk.ToggleButton = Gtk.Template.Child()
     polygon_button: Gtk.ToggleButton = Gtk.Template.Child()
+    bezier_curve_button: Gtk.ToggleButton = Gtk.Template.Child()
+    spline_curve_button: Gtk.ToggleButton = Gtk.Template.Child()
     width_button: Gtk.SpinButton = Gtk.Template.Child()
     color_button: Gtk.ColorButton = Gtk.Template.Child()
     edges_button: Gtk.SpinButton = Gtk.Template.Child()
     fill_button: Gtk.CheckButton = Gtk.Template.Child()
+    curve_point_count_button: Gtk.SpinButton = Gtk.Template.Child()
+    curve_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
+    spline_point_count_button: Gtk.SpinButton = Gtk.Template.Child()
+    spline_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
+    closed_spline_button: Gtk.CheckButton = Gtk.Template.Child()
     display_file_list: Gtk.ListStore = Gtk.Template.Child()
     remove_button: Gtk.Button = Gtk.Template.Child()
     position_x_button: Gtk.SpinButton = Gtk.Template.Child()

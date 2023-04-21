@@ -73,3 +73,10 @@ Para executar: `python3 main.py`
 - Y: Reseta escala da window
 - C: Zoom in da window
 - Z: Zoom out da window
+
+## Trabalho 1.5:
+- Adição de curva de Bezier e entrada para contagem de pontos e contagem de etapas.
+- Adição de controle para clipping de curvas 2D.
+
+## Trabalho 1.6:
+- Adição de B-Splines utilizando Forward Differences e entrada para contagem de pontos e contagem de etapas.
