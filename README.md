@@ -84,3 +84,7 @@ Para executar: `python3 main.py`
 ## Trabalho 1.7:
 - Adição classe Objeto 3D para representar um modelo de arame.
 - Navegação da window no espaço 3D
+
+## Trabalho 1.8:
+- Correção de projeção paralela
+- Adição projeção em perspectiva
