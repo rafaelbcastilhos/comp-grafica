@@ -421,7 +421,6 @@ class Viewport():
 
     def project(self) -> None:
         normal = self._window.calculate_z_vector()
-        cop_distance = self._window.calculate_cop_distance()
 
         for obj in self._main_window.display_file.objects + [self._window]:
-            obj.project(self._window.cop, normal, cop_distance)
+            obj.project(self._window.cop, normal)

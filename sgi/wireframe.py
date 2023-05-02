@@ -95,8 +95,8 @@ class Object(ABC):
                                                            self.projected_coords)
         self.generate_lines()
 
-    def project(self, cop: Vector, normal: Vector, cop_distance: float) -> None:
-        self.projected_coords = self._transform.project(cop, normal, cop_distance, self.coords)
+    def project(self, cop: Vector, normal: Vector) -> None:
+        self.projected_coords = self._transform.project(cop, normal, self.coords)
 
 class Point(Object):
     def __init__(self, position, name: str = '', color: tuple = (1.0, 1.0, 1.0)):
@@ -253,13 +253,11 @@ class Window(Rectangle):
         self.coords = coords[:-1]
         self.cop = coords[-1]
 
-    def project(self, cop: Vector, normal: Vector, cop_distance) -> None:
-
-        coords = self._transform.project(cop, normal, cop_distance, self.coords + [cop, self.position], True)
+    def project(self, cop, normal):
+        coords = self._transform.project(cop, normal, self.coords + [cop, self.position])
         self.projected_coords = coords[:-2]
-        self.projected_cop = coords[-2]
+        self.cop = coords[-2]
         self.projected_position = coords[-1]
-
 
 class BezierCurve(Object):
     _curve_points: list[tuple[Vector]]
@@ -468,8 +466,6 @@ class Wireframe3D(Object):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  object_type: ObjectType = ObjectType.POLYGON3D) -> None:
-
-        coords = [lines[0][0]]
 
         self._lines_indexes = line_indexes
         super().__init__(coords, name, color, line_width, object_type, False, True)

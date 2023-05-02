@@ -337,12 +337,8 @@ class Transform():
 
         return new_coords
 
-    def project(self,
-                cop,
-                normal,
-                cop_distance,
-                coords,
-                is_window: bool = False):
+    def project(self, cop: Vector, normal: Vector, coords: list[Vector]):
+
         translation_matrix = np.matrix([[1.0, 0.0, 0.0, -cop.x],
                                         [0.0, 1.0, 0.0, -cop.y],
                                         [0.0, 0.0, 1.0, -cop.z],
@@ -376,28 +372,13 @@ class Transform():
                                        [-siny, 0.0, cosy, 0.0],
                                        [0.0, 0.0, 0.0, 1.0]])
 
-        perspective_matrix = np.matrix([[1.0, 0.0, 0.0, 0.0],
-                                        [0.0, 1.0, 0.0, 0.0],
-                                        [0.0, 0.0, 1.0, 0.0],
-                                        [0.0, 0.0, 1.0 / cop_distance, 0.0]])
-
         self._projection_matrix = rotation_matrix_x * rotation_matrix_y * translation_matrix
 
         new_coords = []
 
         for coord in coords:
             new_coord = np.matmul(self._projection_matrix, [coord.x, coord.y, coord.z, 1])
-            new_vec = Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2])
-
-            if not is_window:
-                new_coord = perspective_matrix * new_coord.transpose()
-
-                if new_coord[2, 0] >= 0.0 and new_coord[3, 0] > 0.0:
-                    new_vec = Vector(new_coord[0, 0] / new_coord[3, 0],
-                                     new_coord[1, 0] / new_coord[3, 0],
-                                     new_coord[2, 0] / new_coord[3, 0])
-                    new_coords.append(new_vec)
-            else:
-                new_coords.append(new_vec)
+            new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
 
         return new_coords
+

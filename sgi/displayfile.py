@@ -10,13 +10,15 @@ from gi.repository import Gtk
 
 class DisplayFile():
     objects: list[Object]
-    _all_objects_normalized: bool
     _display_file_list: Gtk.ListStore
 
     def __init__(self, display_file_list):
         self.objects = []
         self._all_objects_normalized = False
         self._display_file_list = display_file_list
+        self.add(Parallelepiped(Vector(350, 350), Vector(400.0, 400.0), '', (1, 0, 0)))
+        self.add(Parallelepiped(Vector(0, 0), Vector(300.0, 10.0), '', (0, 1, 0)))
+        self.add(Parallelepiped(Vector(-350, -350), Vector(5.0, 5.0), '', (0, 0, 1)))
 
     def add(self, obj):
         self.objects.append(obj)
