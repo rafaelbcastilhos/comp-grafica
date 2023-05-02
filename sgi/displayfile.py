@@ -2,7 +2,7 @@
 
 from math import degrees
 import gi
-from sgi.wireframe import Object, Window, BezierCurve
+from sgi.wireframe import Object, Window, Parallelepiped
 from sgi.transform import Vector
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -32,18 +32,12 @@ class DisplayFile():
             self._display_file_list.remove(self._display_file_list[-1].iter)
             self._all_objects_normalized = False
 
-    def request_normalization(self):
-        self._all_objects_normalized = False
-
     def normalize_objects(self, window):
-        if not self._all_objects_normalized:
-            self._all_objects_normalized = True
+        window_up = window.calculate_y_projected_vector()
+        rotation = degrees(window_up * Vector(0.0, 1.0, 0.0))
 
-            window_up = window.calculate_up_vector()
-            rotation = degrees(window_up * Vector(0.0, 1.0, 0.0))
+        if window_up.x > 0.0:
+            rotation = 360 - rotation
 
-            if window_up.x > 0.0:
-                rotation = 360 - rotation
-
-            for obj in self.objects + [window]:
-                obj.normalize(window.position, window.scale, rotation)
+        for obj in self.objects + [window]:
+            obj.normalize(window.position, window.scale, rotation)

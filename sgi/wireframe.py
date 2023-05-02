@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import Enum
 import numpy as np
 from sgi.transform import Transform, Vector
@@ -12,8 +12,10 @@ class ObjectType(Enum):
     LINE = 2
     RECTANGLE = 4
     POLYGON = 5
-    BEZIER_CURVE = 6
-    SPLINE_CURVE = 7
+    POLYGON3D = 6
+    BEZIER_CURVE = 7
+    SPLINE_CURVE = 8
+    PARALLELEPIPED = 9
 
 class Object(ABC):
     name: str
@@ -22,6 +24,8 @@ class Object(ABC):
     coords: list[Vector]
     object_type: ObjectType
     normalized_coords: list[Vector]
+    projected_coords: list[Vector]
+    lines: list[list[Vector]]
     fill: bool
     closed: bool
     _transform: Transform
@@ -33,10 +37,13 @@ class Object(ABC):
         self.line_width = line_width
         self.coords = coords
         self.normalized_coords = coords
+        self.projected_coords = coords
+        self.lines = []
         self.object_type = object_type
         self.fill = fill
         self.closed = closed
         self._transform = Transform(self.calculate_center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
+        self.generate_lines()
 
     @property
     def position(self):
@@ -49,6 +56,12 @@ class Object(ABC):
     @property
     def rotation(self):
         return self._transform.rotation
+
+    @abstractmethod
+    def generate_lines(self) -> None:
+        '''
+        Retorna a representação em linhas.
+        '''
 
     def calculate_center(self):
         coord_sum = Vector(0.0, 0.0, 0.0)
@@ -68,8 +81,8 @@ class Object(ABC):
     def rescale(self, scale):
         self.coords = self._transform.rescale(scale, self.coords)
 
-    def rotate(self, angle, anchor: Vector = None):
-        self.coords = self._transform.rotate(Vector(0.0, 0.0, angle), self.coords, anchor)
+    def rotate(self, rotation, anchor: Vector = None) -> None:
+        self.coords = self._transform.rotate(rotation, self.coords, anchor)
 
     def normalize(self, window_center, window_scale, window_rotation):
         diff_x = 1.0 / window_scale.x
@@ -79,8 +92,11 @@ class Object(ABC):
         self.normalized_coords = self._transform.normalize(window_center,
                                                            window_rotation,
                                                            Vector(diff_x, diff_y, diff_z),
-                                                           self.coords)
+                                                           self.projected_coords)
+        self.generate_lines()
 
+    def project(self, cop: Vector, normal: Vector, cop_distance: float) -> None:
+        self.projected_coords = self._transform.project(cop, normal, cop_distance, self.coords)
 
 class Point(Object):
     def __init__(self, position, name: str = '', color: tuple = (1.0, 1.0, 1.0)):
@@ -90,6 +106,8 @@ class Point(Object):
     def coord(self):
         return self.coords[0]
 
+    def generate_lines(self):
+        self.lines = [self.normalized_coords[0], Vector(self.normalized_coords[0].x + 1, self.normalized_coords[0].y)]
 
 class Line(Object):
     def __init__(self,
@@ -108,8 +126,10 @@ class Line(Object):
     def end(self):
         return self.coords[1]
 
+    def generate_lines(self) -> list[list[Vector]]:
+        self.lines = [self.normalized_coords[0], self.normalized_coords[1]]
 
-class Wireframe(Object):
+class Wireframe2D(Object):
     def __init__(self,
                  coords,
                  name: str = '',
@@ -121,7 +141,10 @@ class Wireframe(Object):
         super().__init__(coords, name, color, line_width, object_type, fill, True)
 
 
-class Rectangle(Wireframe):
+    def generate_lines(self):
+        lines = []
+
+class Rectangle(Wireframe2D):
     def __init__(self,
                  origin,
                  extension,
@@ -155,24 +178,88 @@ class Rectangle(Wireframe):
     def corner_b(self):
         return self.coords[3]
 
+    def generate_lines(self) -> None:
+        lines = []
+
+        for i in range(len(self.normalized_coords) - 1):
+            lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
+
+        self.lines = lines
+
 class Window(Rectangle):
+    cop: Vector
+    projected_position: Vector
+
     def __init__(self,
                  origin,
                  extension,
+                 cop,
                  color: tuple = (0.5, 0.0, 0.5),
                  line_width: float = 2.0):
         super().__init__(origin, extension, "Window", color, line_width, False)
+        self.cop = cop
+        self.projected_cop = self.cop
+        self.projected_position = self.position
 
     def calculate_up_vector(self):
-        return self.coords[1] - self.coords[0]
+        self.cop = cop
+        self.projected_position = self.position
 
     @property
-    def normalized_origin(self):
+    def normalized_origin(self) -> Vector:
         return self.normalized_coords[0]
 
     @property
-    def normalized_extension(self):
+    def normalized_extension(self) -> Vector:
         return self.normalized_coords[2]
+
+    def calculate_x_axis(self) -> Vector:
+        return self.coords[2] - self.coords[1]
+
+    def calculate_y_vector(self) -> Vector:
+        return self.coords[1] - self.coords[0]
+
+    def calculate_z_vector(self) -> Vector:
+        return (self.calculate_x_axis() / 2.0).cross_product(self.calculate_y_vector() / 2.0)
+
+    def calculate_x_projected_axis(self) -> Vector:
+        return self.projected_coords[2] - self.projected_coords[1]
+
+    def calculate_y_projected_vector(self) -> Vector:
+        return self.projected_coords[1] - self.projected_coords[0]
+
+    def calculate_z_projected_vector(self) -> Vector:
+        return (self.calculate_x_projected_axis() / 2.0).cross_product(self.calculate_y_projected_vector() / 2.0)
+
+    def calculate_cop_distance(self) -> float:
+        return (self.projected_position - self.projected_cop).magnitude()
+
+    def translate(self, direction: Vector, normalized: bool = False) -> None:
+        if normalized:
+            direction = self._transform.rotate(self.rotation, [direction + self.position], None, False)[0]
+            direction -= self.position
+
+        coords = self._transform.translate(direction, self.coords + [self.cop])
+        self.coords = coords[:-1]
+        self.cop = coords[-1]
+
+    def rescale(self, scale: Vector) -> None:
+        coords = self._transform.rescale(scale, self.coords + [self.cop])
+        self.coords = coords[:-1]
+        self.cop = coords[-1]
+
+    def rotate(self, rotation: Vector, anchor: Vector = None) -> None:
+        coords = self._transform.rotate(rotation, self.coords + [self.cop], anchor)
+        self.coords = coords[:-1]
+        self.cop = coords[-1]
+
+    def project(self, cop: Vector, normal: Vector, cop_distance) -> None:
+
+        coords = self._transform.project(cop, normal, cop_distance, self.coords + [cop, self.position], True)
+        self.projected_coords = coords[:-2]
+        self.projected_cop = coords[-2]
+        self.projected_position = coords[-1]
+
 
 class BezierCurve(Object):
     _curve_points: list[tuple[Vector]]
@@ -239,6 +326,19 @@ class SplineCurve(Object):
             spline_coords = self.generate_spline_coords(spline_points, steps, closed)
 
         super().__init__(spline_coords, name, color, line_width, ObjectType.SPLINE_CURVE, fill, closed)
+
+    def generate_lines(self) -> None:
+
+        lines = []
+
+        for i, _ in enumerate(self.normalized_coords):
+            if i < len(self.normalized_coords) - 1:
+                lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
+
+        if self.closed:
+            lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
+
+        self.lines = lines
 
     def generate_spline_coords_fwd(self, points: list[Vector], steps: int, closed: bool):
         spline_coords = []
@@ -357,3 +457,65 @@ class SplineCurve(Object):
                 spline_coords.append(Vector(new_x[0, 0], new_y[0, 0], 0.0))
 
         return spline_coords
+
+class Wireframe3D(Object):
+    _lines_indexes: list[tuple[int]]
+
+    def __init__(self,
+                 coords: list[Vector],
+                 line_indexes: list[list[Vector]],
+                 name: str = '',
+                 color: tuple = (1.0, 1.0, 1.0),
+                 line_width: float = 1.0,
+                 object_type: ObjectType = ObjectType.POLYGON3D) -> None:
+
+        coords = [lines[0][0]]
+
+        self._lines_indexes = line_indexes
+        super().__init__(coords, name, color, line_width, object_type, False, True)
+
+    def generate_lines(self) -> None:
+        lines = []
+        for i, j in self._lines_indexes:
+            lines.append([self.normalized_coords[i], self.normalized_coords[j]])
+
+        self.lines = lines
+
+
+class Parallelepiped(Wireframe3D):
+    def __init__(self,
+                 origin: Vector,
+                 extension: Vector,
+                 name: str = '',
+                 color: tuple = (1.0, 1.0, 1.0),
+                 line_width: float = 1.0) -> None:
+
+        coords = []
+        line_indexes = []
+
+        coords.append(origin)
+        coords.append(Vector(origin.x, extension.y))
+        coords.append(extension)
+        coords.append(Vector(extension.x, origin.y))
+
+        coords.append(origin + Vector(0.0, 0.0, extension.x - origin.x))
+        coords.append(Vector(origin.x, extension.y, extension.x - origin.x))
+        coords.append(extension + Vector(0.0, 0.0, extension.x - origin.x))
+        coords.append(Vector(extension.x, origin.y, extension.x - origin.x))
+
+        line_indexes.append((0, 1))
+        line_indexes.append((1, 2))
+        line_indexes.append((2, 3))
+        line_indexes.append((3, 0))
+
+        line_indexes.append((0, 4))
+        line_indexes.append((1, 5))
+        line_indexes.append((2, 6))
+        line_indexes.append((3, 7))
+
+        line_indexes.append((4, 5))
+        line_indexes.append((5, 6))
+        line_indexes.append((6, 7))
+        line_indexes.append((7, 4))
+
+        super().__init__(coords, line_indexes, name, color, line_width, ObjectType.PARALLELEPIPED)
