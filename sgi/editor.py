@@ -2,7 +2,7 @@
 
 import gi
 from sgi.transform import Vector
-from sgi.wireframe import ObjectType, Object, Point, Line, Rectangle, Wireframe, BezierCurve, SplineCurve
+from sgi.wireframe import ObjectType, Object, Point, Line, Rectangle, Wireframe2D, BezierCurve, SplineCurve
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
@@ -201,7 +201,7 @@ class Editor():
                 object_completed = True
             elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
                 self._main_window.display_file.add(
-                    Wireframe(
+                    Wireframe2D(
                         self._temp_coords.copy(),
                         "Wireframe",
                         self._color,
@@ -259,9 +259,9 @@ class Editor():
 
     def input_key(self, key):
         if key == 'q' or key == 'Q':
-            self._main_window.viewport.rotate_window(-10)
+            self._main_window.viewport.rotate_window(Vector(0.0, 0.0, -10))
         if key == 'e' or key == 'E':
-            self._main_window.viewport.rotate_window(10)
+            self._main_window.viewport.rotate_window(Vector(0.0, 0.0, 10))
         if key == 'w' or key == 'W':
             self._main_window.viewport.move_window(Vector(0.0, 10.0, 0.0))
         if key == 'a' or key == 'A':
@@ -270,6 +270,18 @@ class Editor():
             self._main_window.viewport.move_window(Vector(0.0, -10.0, 0.0))
         if key == 'd' or key == 'D':
             self._main_window.viewport.move_window(Vector(10.0, 0.0, 0.0))
+        if key == 'f' or key == 'F':
+            self._main_window.viewport.move_window(Vector(0.0, 0.0, 10.0))
+        if key == 'g' or key == 'G':
+            self._main_window.viewport.move_window(Vector(0.0, 0.0, -10.0))
+        if key == 'h' or key == 'H':
+            self._main_window.viewport.rotate_window(Vector(-10.0, 0.0, 0.0))
+        if key == 'j' or key == 'J':
+            self._main_window.viewport.rotate_window(Vector(10.0, 0.0, 0.0))
+        if key == 'k' or key == 'K':
+            self._main_window.viewport.rotate_window(Vector(0.0, -10.0, 0.0))
+        if key == 'l' or key == 'L':
+            self._main_window.viewport.rotate_window(Vector(0.0, 10.0, 0.0))
         if key == 'r' or key == 'R':
             self._main_window.viewport.reset_window_position()
         if key == 't' or key == 'T':
@@ -347,7 +359,6 @@ class Editor():
 
             object_index = self._main_window.display_file.objects.index(self._focus_object)
             self._main_window.display_file.update(object_index)
-            self._main_window.display_file.request_normalization()
 
     def rescale(self, user_data):
         if self._focus_object is not None:
@@ -357,15 +368,13 @@ class Editor():
 
             self._focus_object.rescale(Vector(scale_x, scale_y, scale_z))
             self.update_spin_buttons()
-            self._main_window.display_file.request_normalization()
 
     def rotate(self, user_data):
         if self._focus_object is not None:
             angle = self._rotation_button.get_value()
 
-            self._focus_object.rotate(angle, self._rotation_anchor)
+            self._focus_object.rotate(Vector(0.0, 0.0, angle), self._rotation_anchor)
             self.update_spin_buttons()
-            self._main_window.display_file.request_normalization()
 
     def change_rotation_anchor(self, user_data):
         match self._rotation_anchor_button.get_label():
@@ -404,7 +413,6 @@ class Editor():
 
             object_index = self._main_window.display_file.objects.index(self._focus_object)
             self._main_window.display_file.update(object_index)
-            self._main_window.display_file.request_normalization()
 
     def update_scale(self, user_data):
         if self._user_call_lock and self._focus_object is not None:
@@ -413,13 +421,15 @@ class Editor():
             diff_z = self._scale_z_button.get_value() / self._focus_object.scale.z
 
             self._focus_object.rescale(Vector(diff_x, diff_y, diff_z))
-            self._main_window.display_file.request_normalization()
 
     def update_rotation(self, user_data):
         if self._user_call_lock and self._focus_object is not None:
+            diff_x = self._rotation_x_button.get_value() - self._focus_object.rotation.x
+            diff_y = self._rotation_y_button.get_value() - self._focus_object.rotation.y
             diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
+
             self._focus_object.rotate(diff_z)
-            self._main_window.display_file.request_normalization()
+            self._focus_object.rotate(Vector(diff_x, diff_y, diff_z))
 
     def update_rotation_anchor(self, user_data):
         if self._user_call_lock:

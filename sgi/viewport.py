@@ -3,7 +3,7 @@
 from enum import Enum
 from math import inf
 from sgi.transform import Vector
-from sgi.wireframe import Window
+from sgi.wireframe import Window, Object
 from sgi.displayfile import DisplayFile
 import gi
 gi.require_version("Gtk", "3.0")
@@ -48,7 +48,11 @@ class Viewport():
         self._drawing_area.connect("scroll-event", self.on_scroll)
         self._drawing_area.connect("size-allocate", self.on_size_allocate)
         self._bg_color = bg_color
-        self._window = Window(Vector(-500.0, -500.0), Vector(500.0, 500.0), (1.0, 0.0, 0.0), 2.0)
+        self._window = Window(Vector(-500.0, -500.0),
+                              Vector(500.0, 500.0),
+                              Vector(0.0, 0.0, -100.0),
+                              (0.5, 0.0, 0.5),
+                              2.0)
         self._drag_coord = None
         self._viewport_padding = viewport_padding
         self._clipping_method = ClippingMethod.LIANG_BARSKY
@@ -74,26 +78,28 @@ class Viewport():
 
         return Vector(x_w, y_w)
 
-    def clip_to_lines(self, coords, closed):
+    def clip_to_lines(self, obj):
+        coords = obj.normalized_coords
+
         clipped_lines = []
         coords_size = len(coords)
 
         if coords_size == 1:
             if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
                (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                clipped_lines.append([Vector(coords[0].x, coords[0].y), Vector(coords[0].x + 1, coords[0].y)])
+                clipped_lines.append(obj.lines)
         elif coords_size == 2:
             if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
-                clipped_line = self.cohen_sutherland(coords)
+                clipped_line = self.cohen_sutherland(obj.lines)
                 if len(clipped_line) > 0:
                     clipped_lines.append(clipped_line)
             else:
-                clipped_line = self.liang_barsky(coords)
+                clipped_line = self.liang_barsky(obj.lines)
                 if len(clipped_line) > 0:
                     clipped_lines.append(clipped_line)
         else:
-            clipped_lines = self.coords_to_lines(coords, closed)
-            clipped_coords = []
+            clipped_lines = obj.lines
+            clipped_lines_temp = []
 
             for inter in [Intersection.LEFT, Intersection.RIGHT, Intersection.BOTTOM, Intersection.TOP]:
                 for line in clipped_lines:
@@ -124,19 +130,26 @@ class Viewport():
                             comp_b = line[1].y < self._window.normalized_extension.y
 
                     if comp_inside:
-                        clipped_coords.append(line[0])
-                        clipped_coords.append(line[1])
+                        clipped_lines_temp.append(line)
                     elif comp_a:
                         intersection = self.intersection(line, None, inter, False)
-                        clipped_coords.append(intersection[0])
-                        clipped_coords.append(intersection[1])
+                        clipped_lines_temp.append(intersection)
                     elif comp_b:
                         intersection = self.intersection(line, inter, None, False)
-                        clipped_coords.append(intersection[0])
-                        clipped_coords.append(intersection[1])
+                        clipped_lines_temp.append(intersection)
 
-                clipped_lines = self.coords_to_lines(clipped_coords, closed)
-                clipped_coords.clear()
+                if obj.fill:
+                    for i, _ in enumerate(clipped_lines_temp):
+                        if i < len(clipped_lines_temp) - 1:
+                            if clipped_lines_temp[i][1] != clipped_lines_temp[i + 1][0]:
+                                clipped_lines_temp.insert(i + 1,
+                                                         [clipped_lines_temp[i][1], clipped_lines_temp[i + 1][0]])
+                        else:
+                            if clipped_lines_temp[i][1] != clipped_lines_temp[0][0]:
+                                clipped_lines_temp.append([clipped_lines_temp[i][1], clipped_lines_temp[0][0]])
+
+                clipped_lines = clipped_lines_temp.copy()
+                clipped_lines_temp.clear()
 
         return clipped_lines
 
@@ -302,22 +315,8 @@ class Viewport():
 
         return [new_vector_a, new_vector_b]
 
-    def coords_to_lines(self, coords, closed):
-        lines = []
-
-        if len(coords) == 1:
-            lines.append([coords[0], Vector(coords[0].x + 1, coords[0].y)])
-        else:
-            for i, _ in enumerate(coords):
-                if i < len(coords) - 1:
-                    lines.append([coords[i], coords[i + 1]])
-
-            if len(coords) > 2 and closed:
-                lines.append([coords[-1], coords[0]])
-
-        return lines
-
     def on_draw(self, area, context):
+        self.project()
         self._main_window.display_file.normalize_objects(self._window)
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
         context.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
@@ -327,9 +326,9 @@ class Viewport():
             clipped_coords = []
 
             if obj != self._window:
-                clipped_coords = self.clip_to_lines(obj.normalized_coords, obj.closed)
+                clipped_coords = self.clip_to_lines(obj)
             else:
-                clipped_coords = self.coords_to_lines(obj.normalized_coords, obj.closed)
+                clipped_coords = obj.lines
 
             screen_lines = list(map(self.world_line_to_screen, clipped_coords))
             color = obj.color
@@ -338,6 +337,9 @@ class Viewport():
             context.new_path()
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
+
+            if obj.fill and len(screen_lines) > 0:
+                context.move_to(screen_lines[0][0].x, screen_lines[0][0].y)
 
             for line in screen_lines:
                 if obj.fill:
@@ -383,30 +385,26 @@ class Viewport():
         else:
             self._window.rescale(Vector(0.97, 0.97, 1.0))
 
-        self._main_window.display_file.request_normalization()
 
     def on_size_allocate(self, allocation, user_data):
-        self._main_window.display_file.request_normalization()
+        '''
+        alocacao
+        '''
 
     def move_window(self, direction):
         self._window.translate(direction, True)
-        self._main_window.display_file.request_normalization()
 
     def reset_window_position(self):
         self._window.translate(self._window.position * -1)
-        self._main_window.display_file.request_normalization()
 
-    def rotate_window(self, angle):
-        self._window.rotate(angle)
-        self._main_window.display_file.request_normalization()
+    def rotate_window(self, rotation):
+        self._window.rotate(rotation)
 
     def reset_window_rotation(self):
-        self._window.rotate(-self._window.rotation.z)
-        self._main_window.display_file.request_normalization()
+        self._window.rotate(self._window.rotation * -1)
 
     def reescale_window(self, scale):
         self._window.rescale(scale)
-        self._main_window.display_file.request_normalization()
 
     def reset_window_scale(self):
         diff_x = 1.0 / self._window.scale.x
@@ -414,10 +412,16 @@ class Viewport():
         diff_z = 1.0 / self._window.scale.z
 
         self._window.rescale(Vector(diff_x, diff_y, diff_z))
-        self._main_window.display_file.request_normalization()
 
     def change_clipping_method(self):
         if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
             self._clipping_method = ClippingMethod.LIANG_BARSKY
         else:
             self._clipping_method = ClippingMethod.COHEN_SUTHERLAND
+
+    def project(self) -> None:
+        normal = self._window.calculate_z_vector()
+        cop_distance = self._window.calculate_cop_distance()
+
+        for obj in self._main_window.display_file.objects + [self._window]:
+            obj.project(self._window.cop, normal, cop_distance)
