@@ -75,16 +75,21 @@ Para executar: `python3 main.py`
 - Z: Zoom out da window
 
 ## Trabalho 1.5:
-- Adição de curva de Bezier e entrada para contagem de pontos e contagem de etapas.
-- Adição de controle para clipping de curvas 2D.
+- Adição de curva de Bezier e entrada para contagem de pontos e contagem de etapas na barra lateral esquerda.
+- Adição de controle para clipping de curvas 2D na barra lateral esquerda.
 
 ## Trabalho 1.6:
-- Adição de B-Splines utilizando Forward Differences e entrada para contagem de pontos e contagem de etapas.
+- Adição de B-Splines utilizando Forward Differences e entrada para contagem de pontos e contagem de etapas na barra lateral esquerda.
 
 ## Trabalho 1.7:
 - Adição classe Objeto 3D para representar um modelo de arame.
-- Navegação da window no espaço 3D
+- Navegação da window no espaço 3D.
 
 ## Trabalho 1.8:
-- Correção de projeção paralela
-- Adição projeção em perspectiva
+- Correção de projeção paralela.
+- Adição projeção em perspectiva.
+
+## Trabalho 1.9:
+- Adição de superfícies bicúbicas na barra lateral esquerda.
+- Adição cubo/paralelepípedo 3D na barra lateral esquerda.
+- Adição de carregamento de arquivos e salvamento de objetos.
