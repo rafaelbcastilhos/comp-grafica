@@ -4,7 +4,7 @@
 from enum import Enum
 from math import inf
 from sgi.transform import Vector
-from sgi.wireframe import Window, Object, ObjectType
+from sgi.object import Window, Object, ObjectType
 from sgi.displayfile import DisplayFile
 import gi
 gi.require_version("Gtk", "3.0")

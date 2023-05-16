@@ -3,7 +3,7 @@
 from math import degrees
 from random import randrange
 import gi
-from sgi.wireframe import Object, Window, Surface
+from sgi.object import Object, Window, Surface
 from sgi.file_system import FileSystem
 from sgi.transform import Vector
 gi.require_version("Gtk", "3.0")

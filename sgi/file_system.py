@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from sgi.wireframe import Object, Wireframe3D
+from sgi.object import Object, Wireframe3D
 from sgi.transform import Vector
 
 # Módulo para o gerenciamento de arquivos.

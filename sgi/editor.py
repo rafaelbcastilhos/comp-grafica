@@ -3,7 +3,7 @@
 import gi
 from os.path import join
 from sgi.transform import Vector
-from sgi.wireframe import *  # Não é o ideal, mas não temos muito tempo
+from sgi.object import *  # Não é o ideal, mas não temos muito tempo
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
