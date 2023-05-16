@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
 
+
 from enum import Enum
 from math import inf
 from sgi.transform import Vector
-from sgi.wireframe import Window, Object
+from sgi.wireframe import Window, Object, ObjectType
 from sgi.displayfile import DisplayFile
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
-
+# Neste módulo estão definidos os funcionamentos do viewport.
 class ClippingMethod(Enum):
+    # Algoritmos de clipping.
     COHEN_SUTHERLAND = 1
     LIANG_BARSKY = 2
 
 
 class Intersection(Enum):
+    # Tipos de interseção.
     NULL = 1
     LEFT = 2
     RIGHT = 3
@@ -24,6 +27,7 @@ class Intersection(Enum):
 
 
 class Viewport():
+    # Definição do viewport, este viewport é um handler para um widget DrawingArea.
     _main_window: None
     _drawing_area: Gtk.DrawingArea
     _bg_color: tuple
@@ -33,8 +37,8 @@ class Viewport():
     _clipping_method: ClippingMethod
 
     def __init__(self,
-                 main_window,
-                 drawing_area,
+                 main_window: DisplayFile,
+                 drawing_area: Gtk.DrawingArea,
                  viewport_padding: Vector = Vector(0.0, 0.0, 0.0),
                  bg_color: tuple = (0, 0, 0)):
 
@@ -50,14 +54,16 @@ class Viewport():
         self._bg_color = bg_color
         self._window = Window(Vector(-500.0, -500.0),
                               Vector(500.0, 500.0),
-                              Vector(0.0, 0.0, -100.0),
-                              (0.5, 0.0, 0.5),
+                              Vector(0.0, 0.0, -500.0),
+                              (1, 0, 0),
                               2.0)
         self._drag_coord = None
         self._viewport_padding = viewport_padding
         self._clipping_method = ClippingMethod.LIANG_BARSKY
 
-    def world_to_screen(self, coord):
+    # Métodos utilitários
+    def world_to_screen(self, coord: Vector):
+        # Converte a coordenada de mundo para uma coordenada de tela.
         origin = self._window.normalized_origin - self._viewport_padding
         extension = self._window.normalized_extension + self._viewport_padding
 
@@ -66,10 +72,12 @@ class Viewport():
 
         return Vector(x_s, y_s)
 
-    def world_line_to_screen(self, line):
+    def world_line_to_screen(self, line: list[Vector]):
+        # Converte uma linha no mundo para uma linha na tela.
         return (self.world_to_screen(line[0]), self.world_to_screen(line[1]))
 
-    def screen_to_world(self, coord):
+    def screen_to_world(self, coord: Vector):
+        # Converte a coordenada de tela para uma coordenada de mundo.
         origin = self._window.origin - self._viewport_padding
         extension = self._window.extension + self._viewport_padding
 
@@ -78,17 +86,20 @@ class Viewport():
 
         return Vector(x_w, y_w)
 
-    def clip_to_lines(self, obj):
+    def clip_to_lines(self, obj: Object):
+        # Faz o clipping de um objeto e o converte para a representação em linhas.
+
+        # O algoritmo de clipping de polígonos é o Sutherland-Hodgeman.
         coords = obj.normalized_coords
 
         clipped_lines = []
-        coords_size = len(coords)
 
-        if coords_size == 1:
-            if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
-               (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                clipped_lines.append(obj.lines)
-        elif coords_size == 2:
+        if obj.object_type == ObjectType.POINT:
+            if len(coords) > 0:
+                if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
+                   (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
+                    clipped_lines.append(obj.lines)
+        elif obj.object_type == ObjectType.LINE:
             if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
                 clipped_line = self.cohen_sutherland(obj.lines)
                 if len(clipped_line) > 0:
@@ -138,6 +149,7 @@ class Viewport():
                         intersection = self.intersection(line, inter, None, False)
                         clipped_lines_temp.append(intersection)
 
+                # Patch de linhas
                 if obj.fill:
                     for i, _ in enumerate(clipped_lines_temp):
                         if i < len(clipped_lines_temp) - 1:
@@ -154,10 +166,11 @@ class Viewport():
         return clipped_lines
 
     def intersection(self,
-                     line,
-                     inter_a,
-                     inter_b,
+                     line: list[Vector],
+                     inter_a: Intersection,
+                     inter_b: Intersection,
                      drop_line: bool = True):
+        # Calcula a interseção do vetor com a window.
         angular_coeff = inf
 
         if (line[1].x - line[0].x) != 0:
@@ -203,7 +216,8 @@ class Viewport():
 
         return new_line
 
-    def cohen_sutherland(self, line):
+    def cohen_sutherland(self, line: list[Vector]):
+        # Clipping de linha com o algoritmo de Cohen-Shuterland.
         clipped_line = []
         region_codes = []
 
@@ -264,7 +278,9 @@ class Viewport():
 
         return clipped_line
 
-    def liang_barsky(self, line):
+    def liang_barsky(self, line: list[Vector]):
+        # Clipping de linha com o algoritmo de Liang-Barsky.
+
         p1 = -(line[1].x - line[0].x)
         p2 = -p1
         p3 = -(line[1].y - line[0].y)
@@ -293,7 +309,6 @@ class Viewport():
                 negatives.append(ratio_2)
 
         if p3 != 0:
-
             ratio_3 = q3 / p3
             ratio_4 = q4 / p4
 
@@ -315,13 +330,18 @@ class Viewport():
 
         return [new_vector_a, new_vector_b]
 
+
+    # Método para a renderização.
     def on_draw(self, area, context):
         self.project()
         self._main_window.display_file.normalize_objects(self._window)
+
+        # Preenche o fundo
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
         context.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
         context.fill()
 
+        # Renderiza todos os objetos do display file
         for obj in self._main_window.display_file.objects + [self._window]:
             clipped_coords = []
 
@@ -334,6 +354,7 @@ class Viewport():
             color = obj.color
             line_width = obj.line_width
 
+            # Define cor e largura do pincel
             context.new_path()
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
@@ -357,14 +378,16 @@ class Viewport():
         self._drawing_area.queue_draw()
 
     def on_button_press(self, widget, event):
+        # Evento de clique.
         position = Vector(event.x, event.y)
 
         if event.button == 1:
-            self._main_window.editor.click(self.screen_to_world(position))
+            self._main_window.editor.add_point(self.screen_to_world(position))
         elif event.button == 2:
             self._drag_coord = position
 
     def on_mouse_motion(self, widget, event):
+        # Evento de movimento.
         if self._drag_coord is not None:
             position = Vector(event.x, event.y)
             diff = self._drag_coord - position
@@ -374,10 +397,12 @@ class Viewport():
             self._drag_coord = position
 
     def on_button_release(self, widget, event):
+        # Evento de liberação do mouse.
         if event.button == 2:
             self._drag_coord = None
 
     def on_scroll(self, widget, event):
+        # Evento de rolagem:
         direction = event.get_scroll_deltas()[2]
 
         if direction > 0:
@@ -385,25 +410,23 @@ class Viewport():
         else:
             self._window.rescale(Vector(0.97, 0.97, 1.0))
 
-
     def on_size_allocate(self, allocation, user_data):
-        '''
-        alocacao
-        '''
+        # Evento de alocação.
+        self.reset_window_scale()
 
-    def move_window(self, direction):
+    def move_window(self, direction: Vector):
         self._window.translate(direction, True)
 
     def reset_window_position(self):
         self._window.translate(self._window.position * -1)
 
-    def rotate_window(self, rotation):
+    def rotate_window(self, rotation: Vector):
         self._window.rotate(rotation)
 
     def reset_window_rotation(self):
         self._window.rotate(self._window.rotation * -1)
 
-    def reescale_window(self, scale):
+    def reescale_window(self, scale: Vector):
         self._window.rescale(scale)
 
     def reset_window_scale(self):
@@ -419,8 +442,9 @@ class Viewport():
         else:
             self._clipping_method = ClippingMethod.COHEN_SUTHERLAND
 
-    def project(self) -> None:
+    def project(self):
         normal = self._window.calculate_z_vector()
+        cop_distance = self._window.calculate_cop_distance()
 
         for obj in self._main_window.display_file.objects + [self._window]:
-            obj.project(self._window.cop, normal)
+            obj.project(self._window.cop, normal, cop_distance)
