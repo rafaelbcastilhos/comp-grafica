@@ -16,7 +16,6 @@ class ClippingMethod(Enum):
     COHEN_SUTHERLAND = 1
     LIANG_BARSKY = 2
 
-
 class Intersection(Enum):
     # Tipos de interseção.
     NULL = 1
@@ -24,7 +23,6 @@ class Intersection(Enum):
     RIGHT = 3
     TOP = 4
     BOTTOM = 5
-
 
 class Viewport():
     # Definição do viewport, este viewport é um handler para um widget DrawingArea.
@@ -41,7 +39,6 @@ class Viewport():
                  drawing_area: Gtk.DrawingArea,
                  viewport_padding: Vector = Vector(0.0, 0.0, 0.0),
                  bg_color: tuple = (0, 0, 0)):
-
         self._main_window = main_window
         self._drawing_area = drawing_area
         self._drawing_area.connect("draw", self.on_draw)
@@ -88,7 +85,6 @@ class Viewport():
 
     def clip_to_lines(self, obj: Object):
         # Faz o clipping de um objeto e o converte para a representação em linhas.
-
         # O algoritmo de clipping de polígonos é o Sutherland-Hodgeman.
         coords = obj.normalized_coords
 
@@ -233,7 +229,6 @@ class Viewport():
             clipped_line = line
         elif region_codes[0] & region_codes[1] == 0b0000:
             intersections = []
-
             for region_code in region_codes:
                 match region_code:
                     case 0b0000:
@@ -280,7 +275,6 @@ class Viewport():
 
     def liang_barsky(self, line: list[Vector]):
         # Clipping de linha com o algoritmo de Liang-Barsky.
-
         p1 = -(line[1].x - line[0].x)
         p2 = -p1
         p3 = -(line[1].y - line[0].y)

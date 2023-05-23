@@ -45,7 +45,6 @@ class DisplayFile():
 
     def normalize_objects(self, window: Window):
         # Normaliza todos os objetos.
-
         window_up = window.calculate_y_projected_vector()
         rotation = degrees(window_up * Vector(0.0, 1.0, 0.0))
 

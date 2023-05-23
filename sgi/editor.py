@@ -449,7 +449,6 @@ class Editor():
         # Remove último objeto.
         self._main_window.display_file.remove_last()
 
-
     def load(self, user_data):
         # Carrega um arquivo.
         file_name = self._file_name_entry.get_text()
@@ -465,7 +464,6 @@ class Editor():
 
     def translate(self, user_data):
         # Aplica a translação no objeto em foco.
-
         if self._focus_object is not None:
             translation_x = self._translate_x_button.get_value()
             translation_y = self._translate_y_button.get_value()

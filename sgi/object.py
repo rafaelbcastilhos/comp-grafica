@@ -41,7 +41,6 @@ class Object(ABC):
                  object_type: ObjectType,
                  fill: bool,
                  closed: bool):
-
         super().__init__()
         self.name = name
         self.color = color
@@ -133,7 +132,6 @@ class Line(Object):
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0):
-
         super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE, False, False)
 
     @property
@@ -159,7 +157,6 @@ class Wireframe2D(Object):
                  line_width: float = 1.0,
                  object_type: ObjectType = ObjectType.POLYGON,
                  fill: bool = False):
-
         super().__init__(coords, name, color, line_width, object_type, fill, True)
 
     def generate_lines(self):
@@ -181,7 +178,6 @@ class Rectangle(Wireframe2D):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  fill: bool = False):
-
         super().__init__([origin,
                          Vector(origin.x, extension.y, origin.z),
                          extension,
@@ -218,7 +214,6 @@ class BezierCurve(Object):
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0):
-
         self._curve_points = []
         curve_coords = []
 
@@ -247,7 +242,6 @@ class BezierCurve(Object):
                               control_points: list[Vector],
                               end: Vector,
                               steps: int):
-
         bezier_points_x = np.matrix([[start.x], [control_points[0].x], [control_points[1].x], [end.x]])
         bezier_points_y = np.matrix([[start.y], [control_points[0].y], [control_points[1].y], [end.y]])
 
@@ -281,7 +275,6 @@ class SplineCurve(Object):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  forward_diff: bool = True):
-
         spline_coords = []
 
         if forward_diff:
@@ -325,7 +318,6 @@ class SplineCurve(Object):
                 geometry_matrix_x = np.matrix([[points[i].x], [points[i + 1].x], [points[i + 2].x], [points[i + 3].x]])
                 geometry_matrix_y = np.matrix([[points[i].y], [points[i + 1].y], [points[i + 2].y], [points[i + 3].y]])
             else:
-
                 if closed:
                     points_len = len(points)
                     index_a = i % points_len
@@ -395,7 +387,6 @@ class SplineCurve(Object):
                 geometry_matrix_x = np.matrix([[points[i].x], [points[i + 1].x], [points[i + 2].x], [points[i + 3].x]])
                 geometry_matrix_y = np.matrix([[points[i].y], [points[i + 1].y], [points[i + 2].y], [points[i + 3].y]])
             else:
-
                 if closed:
                     points_len = len(points)
                     index_a = i % points_len
@@ -435,7 +426,6 @@ class Wireframe3D(Object):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  object_type: ObjectType = ObjectType.POLYGON3D):
-
         self._lines_indexes = line_indexes
 
         super().__init__(coords, name, color, line_width, object_type, False, True)
@@ -458,7 +448,6 @@ class Parallelepiped(Wireframe3D):
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0):
-
         coords = []
         line_indexes = []
 

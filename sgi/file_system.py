@@ -28,7 +28,6 @@ class FileSystem():
 
         for line in obj_file:
             data = line.split()
-
             if len(data) > 0:
                 if data[0].startswith('#'):
                     continue
